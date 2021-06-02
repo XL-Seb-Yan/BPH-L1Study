@@ -53,8 +53,13 @@ process.TFileService = cms.Service("TFileService",
 
 # producer under test
 process.load("L1Trigger.L1TNtuples.l1UpgradeTree_cfi")
+process.genTree = cms.EDAnalyzer("L1GenTreeProducerMINIAOD",
+    genJetToken     = cms.untracked.InputTag("ak4GenJets"),
+    genParticleToken = cms.untracked.InputTag("prunedGenParticles"),
+    genInfoToken = cms.InputTag("generator")
+)
 
 process.p = cms.Path(
-  process.l1UpgradeTree
+  process.l1UpgradeTree * process.genTree
 )
 

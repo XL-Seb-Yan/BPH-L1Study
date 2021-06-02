@@ -69,6 +69,7 @@ void Frequency_plot_0(const TString samplename="ZeroBias2018",
 	TTreeReaderArray<unsigned short> muonIso   = {fReader, "muonIso"};
 	TTreeReaderArray<unsigned short> muonQual   = {fReader, "muonQual"};
 
+	int counter0 = 0;
 	ifstream insample(samplename+TString(".txt"));
 	std::string line;
 	while (std::getline(insample, line)){
@@ -94,6 +95,7 @@ void Frequency_plot_0(const TString samplename="ZeroBias2018",
 		
 		for(UInt_t ientry=0; ientry<Evt2Process; ientry++){
 			fReader.SetLocalEntry(ientry);
+			counter0++;
 			
 			N_eg = *nEGs;
 			N_mu = *nMuons;
@@ -206,6 +208,8 @@ void Frequency_plot_0(const TString samplename="ZeroBias2018",
 	hist_24->Draw();
 	c24->SetLogy();
 	c24->Print("Phi_mu.png");
+	
+	cout<<counter0<<endl;
 		
 	gBenchmark->Show("L1NtupleReader");
 }

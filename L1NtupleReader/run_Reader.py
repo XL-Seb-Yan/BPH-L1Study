@@ -60,6 +60,30 @@ if __name__ == "__main__":
                     os.system(r"root -l -q -b -x Frequency_plot_7.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot shown mass of leading EG and sL Eg with fixed muon pt and eta threshold
     if mode is 18:
         os.system(r"root -l -q -b -x Frequency_plot_8.C+\(\"" + data_list + r"\"," + str(Nevt) + "\)") #plot shown events on leading mu and lead eg cuts with fixed subleading eg threshold
+        
+    if mode is 24:
+        for MuEtCut in [5]:
+            for MuEtaCut in [1.0,1.5]:
+                for EgEtaCut in [1.1]:
+                    os.system(r"root -l -q -b -x Frequency_plot_4MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot shown dR of leading muon and Eg with fixed muon  pt threshold 
+                    
+    if mode is 25:
+        for MuEtCut in [5]:
+            for MuEtaCut in [1.0,1.5]:
+                for EgEtaCut in [1.1]:
+                    os.system(r"root -l -q -b -x Frequency_plot_5MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot shown dR of leading EG and sL Eg with fixed muon  pt threshold 
+                    
+    if mode is 27:
+        for MuEtCut in [4]:
+            for MuEtaCut in [1.0]:
+                for EgEtaCut in [1.1]:
+                    os.system(r"root -l -q -b -x Frequency_plot_7MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot shown mass of leading EG and sL Eg with fixed muon pt and eta threshold
+                    
+    if mode is 29:
+        for MuEtCut in [5]:
+            for MuEtaCut in [1.5]:
+                for EgEtaCut in [1.1]:
+                    os.system(r"root -l -q -b -x Frequency_plot_9MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot shown dR of leading EG and sL Eg with fixed muon  pt threshold 
     
     os.system("rm *.d")
     os.system("rm *.so")

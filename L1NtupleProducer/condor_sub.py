@@ -4,13 +4,13 @@ import os, re, sys, commands, math, time, calendar
 print '\nSTART\n'
 ts = calendar.timegm(time.gmtime())
 
-fileName = "L1Ntuple.root"
+fileName = "L1Ntuple"
 jobName = "KeeMC"
 jobCfg = "run-2018D.py"
 jobScript = "cmsRun.sh"
 rel = "CMSSW_10_2_1"
 eosDir = "/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/" + os.environ["USER"] + "/condor/" + jobName + "_" + str(ts) + "/"
-rootDir = os.environ["CMSSW_BASE"] + "/src/L1Trigger/L1TNtuples/test/BPH_study/"
+rootDir = os.environ["CMSSW_BASE"] + "/src/BPH-L1Study/L1NtupleProducer/"
 jobDir = rootDir + jobName + "_" + str(ts) + "/"
 ret = 0
 
@@ -29,6 +29,7 @@ while ret == 0:
    print 'Done!'
    ret = os.system("mv " + jobName + ".tgz " + eosDir) 
    ret = os.chdir(rootDir)
+   ret = os.system("cp /tmp/x509up_u93529 /afs/cern.ch/user/x/xuyan/private/x509up/x509up_u93529")
    proxy_path = "/afs/cern.ch/user/x/xuyan/private/x509up/x509up_u93529"
    
    file1 = open(fileList, 'r')

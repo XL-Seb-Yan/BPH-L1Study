@@ -33,7 +33,14 @@
 
 using namespace std;
 
-void Frequency_plot_4(const TString samplename="ZeroBias2018",
+float deltaR(float eta1, float phi1, float eta2, float phi2){
+	float deta = eta1 - eta2;
+	float dphi = TVector2::Phi_mpi_pi(phi1 - phi2);
+	float dR = TMath::Sqrt(deta*deta+dphi*dphi);
+	return dR;
+}
+
+void Frequency_plot_7MC(const TString samplename="KeeMC",
 											const int nEvents = -1,
 											const int FixedMuEtMin = 0,
 											const float MuEtaCut = 2.5,
@@ -47,13 +54,13 @@ void Frequency_plot_4(const TString samplename="ZeroBias2018",
 	TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
 	
 	// Local variables:
-	UShort_t N_eg, N_mu;
+	UShort_t N_eg, N_mu, N_genpart;
 	float Et_eg, Eta_eg, Phi_eg, Iso_eg;
 	float Et_muon, Eta_muon, Phi_muon, Iso_muon;
 	
 	// Histograms
-	TString histname = "#Delta R (MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta"+MuEtaCut_str+"_EgMaxEta"+EgEtaCut_str + ")";
-	TH1F* hist_11 = new TH1F("dR",histname, 50, 0, 5);
+	TString histname = "m_{EGEG} (MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta"+MuEtaCut_str+"_EgMaxEta"+EgEtaCut_str+ ")";
+	TH1F* hist_11 = new TH1F("dR",histname, 50, 0, 30);
 	
 	TTreeReader fReader_L1;  //!the tree reader
 	TTreeReaderValue<UShort_t> nEGs = {fReader_L1, "nEGs"};
@@ -68,7 +75,17 @@ void Frequency_plot_4(const TString samplename="ZeroBias2018",
 	TTreeReaderArray<float> muonPhi   = {fReader_L1, "muonPhi"};
 	TTreeReaderArray<unsigned short> muonIso   = {fReader_L1, "muonIso"};
 	TTreeReaderArray<unsigned short> muonQual   = {fReader_L1, "muonQual"};
-		
+	
+	TTreeReader fReader_GEN;  //!the tree reader
+	TTreeReaderValue<int> nGenPart  = {fReader_GEN, "nPart"};
+	TTreeReaderArray<float> genPartPt    = {fReader_GEN, "partPt"};
+	TTreeReaderArray<float> genPartEta   = {fReader_GEN, "partEta"};
+	TTreeReaderArray<float> genPartPhi   = {fReader_GEN, "partPhi"};
+	TTreeReaderArray<float> genPartE     = {fReader_GEN, "partE"};
+	TTreeReaderArray<int> genPartId    = {fReader_GEN, "partId"};
+	TTreeReaderArray<int> genPartStat    = {fReader_GEN, "partStat"};
+	TTreeReaderArray<int> genPartParent    = {fReader_GEN, "partParent"};
+	
 	ifstream insample(samplename+TString(".txt"));
 	std::string line;
 	while (std::getline(insample, line)){
@@ -79,30 +96,48 @@ void Frequency_plot_4(const TString samplename="ZeroBias2018",
 		TFile *infile = TFile::Open(file_name,"READ");
 		assert(infile);
 	
-		TString treename = "l1UpgradeEmuTree";
-		if(samplename.Contains("MC"))
-			treename = "l1UpgradeTree";
-		TDirectoryFile *df = (TDirectoryFile *)infile->Get(treename);
-		TTree* eventTree = (TTree*)df->Get("L1UpgradeTree");
-		assert(eventTree);
+		TDirectoryFile *df_L1 = (TDirectoryFile *)infile->Get("l1UpgradeTree");
+		TTree* eventTree_L1 = (TTree*)df_L1->Get("L1UpgradeTree");
+		TDirectoryFile *df_GEN = (TDirectoryFile *)infile->Get("genTree");
+		TTree* eventTree_GEN = (TTree*)df_GEN->Get("L1GenTree");
+		assert(eventTree_L1);
+		assert(eventTree_GEN);
 		
-		fReader.SetTree(eventTree);
+		fReader_L1.SetTree(eventTree_L1);
+		fReader_GEN.SetTree(eventTree_GEN);
 		
-		int Evt2Process = eventTree->GetEntries();
+		int Evt2Process_L1 = eventTree_L1->GetEntries();
+		int Evt2Process_GEN = eventTree_GEN->GetEntries();
+		if(Evt2Process_L1 != Evt2Process_GEN){
+			cout<<"Two trees does not match!"<<endl;
+			break;
+		}
 		if(nEvents != -1)
-			Evt2Process = nEvents;
+			Evt2Process_L1 = nEvents;
 		
-		for(UInt_t ientry=0; ientry<Evt2Process; ientry++){
-			fReader.SetLocalEntry(ientry);
+		for(UInt_t ientry=0; ientry<Evt2Process_L1; ientry++){
+			fReader_L1.SetLocalEntry(ientry);
+			fReader_GEN.SetLocalEntry(ientry);
 			
 			N_eg = *nEGs;
 			N_mu = *nMuons;
-			
-			float MuEt_temp = 0;
-			float EglEt_temp = 0;
+			N_genpart = *nGenPart;	
 			
 			int MuSel_index = -99;
-			int EgSel_index = -99;
+			std::vector<int> EgSel_index;
+			
+			//find GEN level electrons from B+ decay
+			std::vector<TLorentzVector> gen_el;
+			for(UInt_t i=0; i<N_genpart; i++){
+				if(abs(genPartId[i]) != 11 || abs(genPartParent[i]) != 521) continue; 
+				TLorentzVector el;
+				el.SetPtEtaPhiE(genPartPt[i],genPartEta[i],genPartPhi[i],genPartE[i]);
+				gen_el.push_back(el);
+			}
+			if(gen_el.size() < 2){
+				cout<<"Did not find 2 GEN level electrons!";
+				continue;
+			}
 			
 			for(UInt_t i=0; i<N_mu; i++){
 				if(abs(muonEta[i]) > MuEtaCut || muonEt[i] < FixedMuEtMin) continue;
@@ -113,17 +148,17 @@ void Frequency_plot_4(const TString samplename="ZeroBias2018",
 			if(MuSel_index < 0) continue;
 			
 			for(UInt_t i=0; i<N_eg; i++){
-				if(abs(egEta[i]) > EgEtaCut) continue;
-				EgSel_index = i;
-				break;
+				if(abs(egEta[i]) > EgEtaCut || egEt[i] < 2) continue;
+				if(deltaR(egEta[i], egPhi[i], gen_el[0].Eta(), gen_el[0].Phi()) > 0.3 && deltaR(egEta[i], egPhi[i], gen_el[1].Eta(), gen_el[1].Phi()) > 0.3) continue;
+				EgSel_index.push_back(i);
 			}
-			if(EgSel_index < 0) continue;
+			if(EgSel_index.size() < 2) continue;
 			
-			float deta = muonEta[MuSel_index]-egEta[EgSel_index];
-      float dphi = TVector2::Phi_mpi_pi(muonPhi[MuSel_index]-egPhi[EgSel_index]);
-      float dR = TMath::Sqrt(deta*deta+dphi*dphi);
+			TLorentzVector eg1, eg2;
+			eg1.SetPtEtaPhiM(egEt[EgSel_index[0]],egEta[EgSel_index[0]],egPhi[EgSel_index[0]],0.0005110);
+			eg2.SetPtEtaPhiM(egEt[EgSel_index[1]],egEta[EgSel_index[1]],egPhi[EgSel_index[1]],0.0005110);
 			
-			hist_11->Fill(dR);
+			hist_11->Fill((eg1+eg2).M());
 			
 		}//end of event loop
 		infile->Close();
@@ -136,14 +171,14 @@ void Frequency_plot_4(const TString samplename="ZeroBias2018",
 	c11->cd();
 	yaxis = hist_11->GetYaxis();
 	xaxis = hist_11->GetXaxis();
-	yaxis->SetTitle("Entries / 0.1");
-	xaxis->SetTitle("#Delta R (#mu_{L}, e/#gamma_{L})");
+	yaxis->SetTitle("Entries / 1 GeV");
+	xaxis->SetTitle("M_(e/#gamma_{L}, e/#gamma_{sL}) [GeV]");
 	xaxis->SetTitleOffset(1.2);
 	hist_11->Draw("HIST");
-	TString outName = "Histo_dR_MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta_"+MuEtaCut_str+"_EgMaxEta"+EgEtaCut_str+".png";
+	TString outName = "Histo_mEgEg_MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta_"+MuEtaCut_str+"_EgMaxEta"+EgEtaCut_str+".png";
 	c11->Print(outName);
 	
 	cout<<hist_11->GetEntries()<<endl;
-	
+		
 	gBenchmark->Show("L1NtupleReader");
 }
