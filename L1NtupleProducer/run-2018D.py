@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from FWCore.ParameterSet.VarParsing import VarParsing
+from BPHL1Study.L1NtupleProducer.myVarParsing import VarParsing
 
 options = VarParsing('analysis')
 options.parseArguments()

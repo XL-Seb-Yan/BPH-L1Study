@@ -46,6 +46,6 @@
 <use name="PhysicsTools/Utilities"/>
 <use name="HLTrigger/HLTcore"/>
 <use name="L1Trigger/L1TNtuples"/>
-<library   file="*.cc" name="BPH-L1StudyL1NtupleProducerPlugins">
+<library   file="*.cc" name="BPHL1StudyL1NtupleProducerPlugins">
   <flags   EDM_PLUGIN="1"/>
 </library>
