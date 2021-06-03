@@ -9,7 +9,7 @@ process = cms.Process("L1NTUPLE")
 # conditions
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.autoCond_condDBv2 import autoCond
-process.GlobalTag.globaltag = cms.string(autoCond['run2_data'])
+process.GlobalTag.globaltag = cms.string(autoCond['run2_mc'])
 
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
@@ -27,10 +27,17 @@ process.source.lumisToProcess.extend(myLumis)
 
 # producer under test
 process.load("L1Trigger.L1TNtuples.l1UpgradeTree_cfi")
+process.genTree = cms.EDAnalyzer("L1GenTreeProducerMINIAOD",
+    genJetToken     = cms.untracked.InputTag("ak4GenJets"),
+    genParticleToken = cms.untracked.InputTag("prunedGenParticles"),
+    genInfoToken = cms.InputTag("generator")
+)
 
 # output file
 process.TFileService = cms.Service("TFileService",
     fileName = cms.string('L1Ntuple.root')
 )
 
-process.p = cms.Path(process.l1UpgradeTree)
+process.p = cms.Path(
+  process.l1UpgradeTree * process.genTree
+)

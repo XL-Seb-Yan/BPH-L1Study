@@ -15,7 +15,7 @@ export $SCRAM_ARCH=slc7_amd64_gcc700
 cd ${3}/src/
 scramv1 b ProjectRename
 eval `scramv1 runtime -sh` # cmsenv is an alias not on the workers
-cmsRun BPH-L1Study/L1NtupleProducer/${5} inputFile=${6} maxEvents=-1
+cmsRun BPH-L1Study/L1NtupleProducer/${5} inputFiles_load=${6} maxEvents=-1
 cp ${7}.root ${1}/${7}_${4}.root
 rm ${7}.root
 cd ${_CONDOR_SCRATCH_DIR}
