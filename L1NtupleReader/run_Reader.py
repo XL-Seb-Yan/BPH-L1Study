@@ -33,11 +33,11 @@ if __name__ == "__main__":
     if mode is 10:
         os.system(r"root -l -q -b -x Frequency_plot_0.C+\(\"" + data_list + r"\"," + str(Nevt) + "\)") #standard plot
     if mode is 11:
-        for MuEtaCut in [2,1.5,1]:
+        for MuEtaCut in [1.5,1]:
             for EgEtaCut in [2.5,1.1]:
                 os.system(r"root -l -q -b -x Frequency_plot_1.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot shown events on mu and eg cuts
     if mode is 12:
-        for MuEtThr in range(2,10,1):
+        for MuEtThr in range(3,10,2):
             os.system(r"root -l -q -b -x Frequency_plot_2.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtThr) + "\)") #plot shown events on leading eg and sub-lead eg cuts with fixed muon threshold
     if mode is 13:
         os.system(r"root -l -q -b -x Frequency_plot_3.C+\(\"" + data_list + r"\"," + str(Nevt) + "\)") #plot frequncy of single muon trigger as a function of eta and pt cut 
@@ -61,6 +61,32 @@ if __name__ == "__main__":
     if mode is 18:
         os.system(r"root -l -q -b -x Frequency_plot_8.C+\(\"" + data_list + r"\"," + str(Nevt) + "\)") #plot shown events on leading mu and lead eg cuts with fixed subleading eg threshold
         
+    if mode is 111:
+        for MuEtThr in range(9,10,1):
+            os.system(r"root -l -q -b -x Frequency_plot_11.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtThr) + "\)") #plot shown events on leading eg and sub-lead eg cuts (2EG trigger)
+            
+    if mode is 211:
+        for MuEtThr in range(9,10,1):
+            os.system(r"root -l -q -b -x Frequency_plot_11MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtThr) + "\)") #plot shown events on leading eg and sub-lead eg cuts (2EG trigger)
+            
+    if mode is 112:
+        for EgEtaCut in [1.0, 2.5]:
+            os.system(r"root -l -q -b -x Frequency_plot_12.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "\)") #plot shown dR of leading EG and sL Eg(2 EG trigger)
+            
+    if mode is 113:
+        for MuEtaCut in [1.5]:
+            os.system(r"root -l -q -b -x Frequency_plot_13.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtaCut) + "\)") #plot shown events on mu and eg cuts
+            
+    if mode is 213:
+        for MuEtaCut in [1.5]:
+            os.system(r"root -l -q -b -x Frequency_plot_13MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtaCut) + "\)") #plot shown events on mu and eg cuts
+            
+    if mode is 21:
+        for MuEtaCut in [1.5,1.0]:
+            for EgEtaCut in [2.5,1.1]:
+                os.system(r"root -l -q -b -x Frequency_plot_1MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot shown events on mu and eg cuts
+                
+                
     if mode is 24:
         for MuEtCut in [5]:
             for MuEtaCut in [1.0,1.5]:
@@ -69,9 +95,10 @@ if __name__ == "__main__":
                     
     if mode is 25:
         for MuEtCut in [5]:
-            for MuEtaCut in [1.0,1.5]:
+            for MuEtaCut in [1.5]:
                 for EgEtaCut in [1.1]:
-                    os.system(r"root -l -q -b -x Frequency_plot_5MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot shown dR of leading EG and sL Eg with fixed muon  pt threshold 
+                    for EgEtCut in [2,3,4,5,6,7,8]:
+                        os.system(r"root -l -q -b -x Frequency_plot_5MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "," + str(EgEtCut) +"\)") #plot shown dR of leading EG and sL Eg with fixed muon  pt threshold 
                     
     if mode is 27:
         for MuEtCut in [4]:
@@ -83,7 +110,16 @@ if __name__ == "__main__":
         for MuEtCut in [5]:
             for MuEtaCut in [1.5]:
                 for EgEtaCut in [1.1]:
-                    os.system(r"root -l -q -b -x Frequency_plot_9MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot shown dR of leading EG and sL Eg with fixed muon  pt threshold 
+                    os.system(r"root -l -q -b -x Frequency_plot_9MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") #plot isolation variable of the leading and ubleadng EG
+                    
+    if mode is 210:
+        for EgEtaCut in [2.5]:
+            for EgEtCut in [3,5,7]:
+                os.system(r"root -l -q -b -x Frequency_plot_10MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(EgEtCut) + "\)") #plot shown dR, mass of matched/unmatched leading EG and sL Eg with fixed muon  pt threshold 
+                        
+    if mode is 212:
+        for EgEtaCut in [1.0,2.5]:
+            os.system(r"root -l -q -b -x Frequency_plot_12MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "\)") #plot shown dR of leading EG and sL Eg with fixed muon  pt threshold 
     
     os.system("rm *.d")
     os.system("rm *.so")

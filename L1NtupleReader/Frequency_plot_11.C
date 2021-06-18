@@ -33,8 +33,16 @@
 
 using namespace std;
 
-void Frequency_plot_3(const TString samplename="ZeroBias2018",
-									const int nEvents = -1){
+float deltaR(float eta1, float phi1, float eta2, float phi2){
+	float deta = eta1 - eta2;
+	float dphi = TVector2::Phi_mpi_pi(phi1 - phi2);
+	float dR = TMath::Sqrt(deta*deta+dphi*dphi);
+	return dR;
+}
+
+void Frequency_plot_11(const TString samplename="ZeroBias2018",
+											const int nEvents = -1,
+											const int FixedMuEtMin = 0){
 	
 	gBenchmark->Start("L1NtupleReader");
 	gROOT->SetBatch(1);
@@ -44,6 +52,8 @@ void Frequency_plot_3(const TString samplename="ZeroBias2018",
 	UShort_t N_eg, N_mu;
 	float Et_eg, Eta_eg, Phi_eg, Iso_eg;
 	float Et_muon, Eta_muon, Phi_muon, Iso_muon;
+	
+	int counter_0 = 0;
 	
 	// Histograms
 	// TH1F* hist_11 = new TH1F("NEg","Number of e/#gamma", 40, 0, 20);
@@ -55,8 +65,8 @@ void Frequency_plot_3(const TString samplename="ZeroBias2018",
 	// TH1F* hist_23 = new TH1F("MuEta","#mu #eta", 100, -5, 5);
 	// TH1F* hist_24 = new TH1F("MuPhi","#mu #phi", 100, -3.15, 3.15);
 	
-	TString histname = "SingleMu";
-	TH2D* hist2d_1 = new TH2D("hist",histname,10,0,10,25,0,2.5);
+	TString grname = "MuEtMin" + std::to_string(FixedMuEtMin) + "_AbsEtaMax1.5";
+	TH2F* hist2d_1 = new TH2F("EgEtl_EgEts",grname,9,1,10,9,1,10);
 	
 	TTreeReader fReader;  //!the tree reader
 	TTreeReaderValue<UShort_t> nEGs = {fReader, "nEGs"};
@@ -72,7 +82,6 @@ void Frequency_plot_3(const TString samplename="ZeroBias2018",
 	TTreeReaderArray<unsigned short> muonIso   = {fReader, "muonIso"};
 	TTreeReaderArray<unsigned short> muonQual   = {fReader, "muonQual"};
 	
-	int counter_0 = 0;
 	ifstream insample(samplename+TString(".txt"));
 	std::string line;
 	while (std::getline(insample, line)){
@@ -96,56 +105,74 @@ void Frequency_plot_3(const TString samplename="ZeroBias2018",
 		if(nEvents != -1)
 			Evt2Process = nEvents;
 		
-		for(int ientry=0; ientry<Evt2Process; ientry++){
+		for(UInt_t ientry=0; ientry<Evt2Process; ientry++){
 			fReader.SetLocalEntry(ientry);
 			
 			N_eg = *nEGs;
 			N_mu = *nMuons;
 			
-			for(int MuEtThr = 0; MuEtThr < 10; MuEtThr+=1){
-				for(double MuEtaThr = 0; MuEtaThr < 2.5; MuEtaThr+=0.1){
+			// int MuSel_index = -99;
+			// for(UInt_t i=0; i<N_mu; i++){
+				// if(abs(muonEta[i]) > 1.5 || muonEt[i] < FixedMuEtMin) continue;
+				// if(muonQual[i] < 12) continue;
+				// MuSel_index = i;
+				// break;
+			// }
+			// if(MuSel_index < 0) continue;
+			// counter_0++;
 			
-					bool isPass = false;
-					
-					for(UInt_t i=0; i<N_mu; i++){
-						if(muonEt[i] < MuEtThr) continue;
-						if(muonQual[i] < 12) continue;
-						if(abs(muonEta[i]) > MuEtaThr+0.001) continue;
+			std::vector<int> EgSel_index;
+			for(UInt_t i=0; i<N_eg; i++){
+				//if(abs(egEta[i]) > 1) continue;
+				EgSel_index.push_back(i);
+			}
+			if(EgSel_index.size() < 2) continue;
+			
+			for(int EglThr = 0; EglThr < 10; EglThr+=1){
+				for(int EgsThr = 0; EgsThr <= EglThr; EgsThr+=1){
+			
+			bool isPass = false;
+			for(int i=0; i<EgSel_index.size()-1; i++){
+				for(int j=i+1; j<EgSel_index.size(); j++){
+					float dR = deltaR(egEta[EgSel_index[i]],egPhi[EgSel_index[i]],egEta[EgSel_index[j]],egPhi[EgSel_index[j]]);
+					if(egEt[EgSel_index[i]] >= EglThr && egEt[EgSel_index[j]] >= EgsThr && dR < 1)
+					//if(egEt[EgSel_index[i]] >= EglThr && egEt[EgSel_index[j]] >= EgsThr)	
 						isPass = true;
-						break;
-					}
-					
-					if(isPass)
-						hist2d_1->Fill(MuEtThr+0.5, MuEtaThr+0.05);
+				}
+			}
+			
+			if(isPass)
+				hist2d_1->Fill(EglThr, EgsThr);
+			
 				}
 			}
 			
 		}//end of event loop
 		infile->Close();
-		df = NULL;
-		eventTree = NULL;
 	}//end of file loop
 	
 	TAxis* yaxis = NULL;
 	TAxis* xaxis = NULL;
 	
-	Int_t refBinGlobal = hist2d_1->GetBin(10,16);
+	Int_t refBinGlobal = hist2d_1->GetBin(1,1);
 	float refBinEntry = hist2d_1->GetBinContent(refBinGlobal);
-	cout<<refBinEntry<<endl;
 	//hist2d_1->Scale(1/refBinEntry);
+	hist2d_1->Scale(1.0/1098);
 	
 	TCanvas *c11 = new TCanvas("","",1200,900);
 	c11->cd();
 	yaxis = hist2d_1->GetYaxis();
 	xaxis = hist2d_1->GetXaxis();
-	xaxis->SetTitle("Threshold (>=) on p_{T #mu} [GeV]");
+	yaxis->SetTitle("Threshold (>=) on E_{T e/#gamma sL} [GeV]");
+	xaxis->SetTitle("Threshold (>=) on E_{T e/#gamma L} [GeV]");
 	xaxis->SetTitleOffset(1.2);
-	yaxis->SetTitle("Threshold (<=) on |#eta|_{#mu}");
 	hist2d_1->Draw("COLZ TEXT");
-	TString outName = "Histo_frequency_singleMu.png";
+	TString outName = "Histo_frequency_2EGdR1.0";
 	if(samplename.Contains("MC"))
-		outName = "Histo_efficiency_singleMu.png";
-	c11->Print(outName);
+		outName = "Histo_efficiency_2EGdR1.0";
+	gStyle->SetOptTitle(0);
+	c11->Print(outName+".png");
+	c11->Print(outName+".svg");
 	cout<<counter_0<<endl;
 		
 	gBenchmark->Show("L1NtupleReader");

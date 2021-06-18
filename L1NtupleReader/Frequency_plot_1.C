@@ -61,9 +61,9 @@ void Frequency_plot_1(const TString samplename="ZeroBias2018",
 	// TH1F* hist_24 = new TH1F("MuPhi","#mu #phi", 100, -3.15, 3.15);
 	
 	TString histname = "MuEtaThr" + MuEtaCut_str + "_EgEtaThr" + EgEtaCut_str;
-	TH2F* hist2d_1 = new TH2F("hist",histname,10,0,10,10,0,10);
+	TH2F* hist2d_1 = new TH2F("hist",histname,10,0,10,9,1,10);
 	
-	TTreeReader fReader;  //!the tree reader
+TTreeReader fReader;  //!the tree reader
 	TTreeReaderValue<UShort_t> nEGs = {fReader, "nEGs"};
 	TTreeReaderArray<float> egEt    = {fReader, "egEt"};
 	TTreeReaderArray<float> egEta   = {fReader, "egEta"};
@@ -77,8 +77,6 @@ void Frequency_plot_1(const TString samplename="ZeroBias2018",
 	TTreeReaderArray<unsigned short> muonIso   = {fReader, "muonIso"};
 	TTreeReaderArray<unsigned short> muonQual   = {fReader, "muonQual"};
 	
-	
-	int counter_0 = 0;
 	ifstream insample(samplename+TString(".txt"));
 	std::string line;
 	while (std::getline(insample, line)){
@@ -88,7 +86,7 @@ void Frequency_plot_1(const TString samplename="ZeroBias2018",
 		cout << "Processing " << file_name <<endl; cout.flush();
 		TFile *infile = TFile::Open(file_name,"READ");
 		assert(infile);
-		
+	
 		TString treename = "l1UpgradeEmuTree";
 		if(samplename.Contains("MC"))
 			treename = "l1UpgradeTree";
@@ -104,12 +102,11 @@ void Frequency_plot_1(const TString samplename="ZeroBias2018",
 		
 		for(UInt_t ientry=0; ientry<Evt2Process; ientry++){
 			fReader.SetLocalEntry(ientry);
-			counter_0++;
 			
 			N_eg = *nEGs;
 			N_mu = *nMuons;
 			
-			for(int MuThr = 0; MuThr < 10; MuThr+=1){
+			for(int MuThr = 1; MuThr < 10; MuThr+=1){
 				for(int EgThr = 0; EgThr < 10; EgThr+=1){
 			
 					float EgEt_temp = 0;
@@ -142,8 +139,8 @@ void Frequency_plot_1(const TString samplename="ZeroBias2018",
 		
 	Int_t refBinGlobal = hist2d_1->GetBin(1,10);
 	float refBinEntry = hist2d_1->GetBinContent(refBinGlobal);
-	hist2d_1->Scale(1/refBinEntry);
-	//hist2d_1->Scale(1.0/counter_0);
+	//hist2d_1->Scale(1/refBinEntry);
+	hist2d_1->Scale(1.0/1098);
 	
 	TCanvas *c11 = new TCanvas("","",1200,900);
 	c11->cd();
@@ -153,10 +150,12 @@ void Frequency_plot_1(const TString samplename="ZeroBias2018",
 	xaxis->SetTitleOffset(1.2);
 	yaxis->SetTitle("Threshold (>=) on p_{T #mu} [GeV]");
 	hist2d_1->Draw("COLZ TEXT");
-	TString outName = "Histo_frequency_MuEta" + MuEtaCut_str + "_EgEta" + EgEtaCut_str + ".png";
+	TString outName = "Histo_frequency_MuEta" + MuEtaCut_str + "_EgEta" + EgEtaCut_str;
 	if(samplename.Contains("MC"))
-		outName = "Histo_efficiency_MuEta" + MuEtaCut_str + "_EgEta" + EgEtaCut_str + ".png";
-	c11->Print(outName);
+		outName = "Histo_efficiency_MuEta" + MuEtaCut_str + "_EgEta" + EgEtaCut_str;
+	gStyle->SetOptTitle(0);
+	c11->Print(outName+".png");
+	c11->Print(outName+".svg");
 		
 	gBenchmark->Show("L1NtupleReader");
 }

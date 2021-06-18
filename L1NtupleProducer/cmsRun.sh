@@ -15,6 +15,7 @@ tar -xf ${2}.tgz
 rm ${2}.tgz
 mv run-2018D.py ${3}/src/BPHL1Study/L1NtupleProducer
 mv JSON_dataNtuples.txt ${3}/src/BPHL1Study/L1NtupleProducer
+mv filelist.tgz ${3}/src/BPHL1Study/L1NtupleProducer
 mv ${6} ${3}/src/BPHL1Study/L1NtupleProducer
 
 export $SCRAM_ARCH=slc7_amd64_gcc700
@@ -22,8 +23,11 @@ cd ${3}/src/
 scramv1 b ProjectRename
 eval `scramv1 runtime -sh` # cmsenv is an alias not on the workers
 cd BPHL1Study/L1NtupleProducer
+tar -xf filelist.tgz
 ls ./
-cmsRun ${5} inputFiles_load=${6}
+touch log.txt
+cmsRun ${5} inputFiles_load=${6} 2>&1 | tee log.txt
+cp log.txt ${1}/log_${4}.txt
 cp ${7}.root ${1}/${7}_${4}.root
 rm ${7}.root
 cd ${_CONDOR_SCRATCH_DIR}

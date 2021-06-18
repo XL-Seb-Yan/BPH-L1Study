@@ -40,21 +40,17 @@ float deltaR(float eta1, float phi1, float eta2, float phi2){
 	return dR;
 }
 
-void Frequency_plot_5MC(const TString samplename="KeeMC",
+void Frequency_plot_10MC(const TString samplename="KeeMC",
 											const int nEvents = -1,
-											const int FixedMuEtMin = 0,
-											const float MuEtaCut = 2.5,
 											const float EgEtaCut = 2.5,
-											const float EgEtCut = 2.5){
+											const float EgEtCut = 2){
 	
 	gBenchmark->Start("L1NtupleReader");
 	gROOT->SetBatch(1);
 	gStyle->SetOptStat(0);
 	
-	TString MuEtaCut_str = std::to_string(MuEtaCut).substr(0, std::to_string(MuEtaCut).find(".") + 2);
 	TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
 	TString EgEtCut_str = std::to_string(EgEtCut).substr(0, std::to_string(EgEtCut).find(".") + 2);
-	
 	
 	// Local variables:
 	UShort_t N_eg, N_mu, N_genpart;
@@ -62,8 +58,13 @@ void Frequency_plot_5MC(const TString samplename="KeeMC",
 	float Et_muon, Eta_muon, Phi_muon, Iso_muon;
 	
 	// Histograms
-	TString histname = "#Delta R (MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta"+MuEtaCut_str+"_EgLsLMinEt" + EgEtCut_str + "MaxEta"+EgEtaCut_str +"_dieleLQ2"+")";
-	TH1F* hist_11 = new TH1F("dR",histname, 50, 0, 2);
+	TH1F* hist_11 = new TH1F("MR","Matching result", 3, 0, 3);
+	TH1F* hist_12a = new TH1F("dRa","#Delta R_{EGEG}", 50, 0, 5);
+	TH1F* hist_12b = new TH1F("dRb","#Delta R_{EGEG}", 50, 0, 5);
+	TH1F* hist_12c = new TH1F("dRc","#Delta R_{EGEG}", 50, 0, 5);
+	TH1F* hist_13a = new TH1F("Massa","M_{EGEG}", 50, 0, 20);
+	TH1F* hist_13b = new TH1F("Massb","M_{EGEG}", 50, 0, 20);
+	TH1F* hist_13c = new TH1F("Massc","M_{EGEG}", 50, 0, 20);
 	
 	TTreeReader fReader_L1;  //!the tree reader
 	TTreeReaderValue<UShort_t> nEGs = {fReader_L1, "nEGs"};
@@ -142,33 +143,49 @@ void Frequency_plot_5MC(const TString samplename="KeeMC",
 				continue;
 			}
 			
-			for(UInt_t i=0; i<N_mu; i++){
-				if(abs(muonEta[i]) > MuEtaCut || muonEt[i] < FixedMuEtMin) continue;
-				if(muonQual[i] < 12) continue;
-				MuSel_index = i;
-				break;
-			}
-			if(MuSel_index < 0) continue;
+			// for(UInt_t i=0; i<N_mu; i++){
+				// if(abs(muonEta[i]) > 1.5 || muonEt[i] < 5) continue;
+				// if(muonQual[i] < 12) continue;
+				// MuSel_index = i;
+				// break;
+			// }
+			// if(MuSel_index < 0) continue;
 			
 			for(UInt_t i=0; i<N_eg; i++){
 				if(abs(egEta[i]) > EgEtaCut || egEt[i] < EgEtCut) continue;
-				//if(deltaR(egEta[i], egPhi[i], gen_el[0].Eta(), gen_el[0].Phi()) > 0.3 && deltaR(egEta[i], egPhi[i], gen_el[1].Eta(), gen_el[1].Phi()) > 0.3) continue;
 				EgSel_index.push_back(i);
 			}
 			if(EgSel_index.size() < 2) continue;
+			
+			float dR_1_1 = deltaR(egEta[EgSel_index[0]], egPhi[EgSel_index[0]], gen_el[0].Eta(), gen_el[0].Phi());
+			float dR_1_2 = deltaR(egEta[EgSel_index[0]], egPhi[EgSel_index[0]], gen_el[1].Eta(), gen_el[1].Phi());
+			float dR_2_1 = deltaR(egEta[EgSel_index[1]], egPhi[EgSel_index[1]], gen_el[0].Eta(), gen_el[0].Phi());
+			float dR_2_2 = deltaR(egEta[EgSel_index[1]], egPhi[EgSel_index[1]], gen_el[1].Eta(), gen_el[1].Phi());
+			
+			int match_result = 0;
+			
+			if(dR_1_1 < 0.3 || dR_1_2 < 0.3) match_result++;
+			if(dR_2_1 < 0.3 || dR_2_2 < 0.3) match_result++;
+			
+			hist_11->Fill(match_result);
 			
 			TLorentzVector eg1, eg2;
 			eg1.SetPtEtaPhiM(egEt[EgSel_index[0]],egEta[EgSel_index[0]],egPhi[EgSel_index[0]],0.0005110);
 			eg2.SetPtEtaPhiM(egEt[EgSel_index[1]],egEta[EgSel_index[1]],egPhi[EgSel_index[1]],0.0005110);
 			
 			float invmass = (eg1+eg2).M();
-			
 			float dR = deltaR(egEta[EgSel_index[0]], egPhi[EgSel_index[0]], egEta[EgSel_index[1]], egPhi[EgSel_index[1]]);
 			
-			if(1.1 <= invmass*invmass && invmass*invmass <= 6.25)
-			//if(14.82 < invmass*invmass)
-				hist_11->Fill(dR);
-			
+			if(match_result == 0){
+				hist_13a->Fill(invmass);
+			hist_12a->Fill(dR);}
+			if(match_result == 1){
+				hist_13b->Fill(invmass);
+			hist_12b->Fill(dR);}
+			if(match_result == 2){
+				hist_13c->Fill(invmass);
+			hist_12c->Fill(dR);}
+				
 		}//end of event loop
 		infile->Close();
 	}//end of file loop
@@ -179,16 +196,61 @@ void Frequency_plot_5MC(const TString samplename="KeeMC",
 	
 	TCanvas *c11 = new TCanvas("","",1200,900);
 	c11->cd();
+	hist_11->Scale(1.0/hist_11->GetEntries());
 	yaxis = hist_11->GetYaxis();
 	xaxis = hist_11->GetXaxis();
-	yaxis->SetTitle("Entries / 0.04");
-	xaxis->SetTitle("#Delta R (e/#gamma_{L}, e/#gamma_{sL})");
+	yaxis->SetTitle("Entries");
+	yaxis->SetRangeUser(0,1);
+	xaxis->SetTitle("Matching result");
 	xaxis->SetTitleOffset(1.2);
+	hist_11->SetLineWidth(2);
 	hist_11->Draw("HIST");
-	TString outName = "Histo_dR_MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta"+MuEtaCut_str+"_EgLsLMinEt" + EgEtCut_str + "MaxEta"+EgEtaCut_str +"_dieleLQ2"+".png";
+	//c11->SetLogy();
+	TString outName = "Histo_matching_result_EgLsLMaxEta"+EgEtaCut_str + "MinEt"+EgEtCut_str+".png";
 	c11->Print(outName);
 	
-	cout<<hist_11->GetEntries()<<endl;
+	TCanvas *c12 = new TCanvas("","",1200,900);
+	c12->cd();
+	yaxis = hist_12a->GetYaxis();
+	xaxis = hist_12a->GetXaxis();
+	yaxis->SetTitle("Entries / 0.1");
+	yaxis->SetRangeUser(0.1,10000);
+	xaxis->SetTitle("#Delta R (e/#gamma_{L}, e/#gamma_{sL})");
+	xaxis->SetTitleOffset(1.2);
+	hist_12b->SetLineColor(8);
+	hist_12c->SetLineColor(2);
+	hist_12a->SetLineWidth(2);
+	hist_12b->SetLineWidth(2);
+	hist_12c->SetLineWidth(2);
+	hist_12a->Draw("HIST");
+	hist_12b->Draw("HIST SAME");
+	hist_12c->Draw("HIST SAME");
+	c12->SetLogy();
+	outName = "Histo_dR_mr_EgLsLMaxEta"+EgEtaCut_str + "MinEt"+EgEtCut_str+".png";
+	c12->Print(outName);
+	cout<<hist_12a->GetEntries()<<" "<<hist_12b->GetEntries()<<" "<<hist_12c->GetEntries()<<endl;
+	
+	TCanvas *c13 = new TCanvas("","",1200,900);
+	c13->cd();
+	yaxis = hist_13a->GetYaxis();
+	xaxis = hist_13a->GetXaxis();
+	yaxis->SetTitle("Entries / 0.4");
+	yaxis->SetRangeUser(0.1,10000);
+	xaxis->SetTitle("M_{e/#gamma_{L}, e/#gamma_{sL}}");
+	xaxis->SetTitleOffset(1.2);
+	hist_13b->SetLineColor(8);
+	hist_13c->SetLineColor(2);
+	hist_13a->SetLineWidth(2);
+	hist_13b->SetLineWidth(2);
+	hist_13c->SetLineWidth(2);
+	hist_13a->Draw("HIST");
+	hist_13b->Draw("HIST SAME");
+	hist_13c->Draw("HIST SAME");
+	c13->SetLogy();
+	outName = "Histo_mass_mr_EgLsLMaxEta"+EgEtaCut_str + "MinEt"+EgEtCut_str+".png";
+	c13->Print(outName);
+	cout<<hist_13a->GetEntries()<<" "<<hist_13b->GetEntries()<<" "<<hist_13c->GetEntries()<<endl;
+	
 		
 	gBenchmark->Show("L1NtupleReader");
 }

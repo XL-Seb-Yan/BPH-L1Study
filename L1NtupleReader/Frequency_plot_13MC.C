@@ -33,28 +33,15 @@
 
 using namespace std;
 
-float deltaR(float eta1, float phi1, float eta2, float phi2){
-	float deta = eta1 - eta2;
-	float dphi = TVector2::Phi_mpi_pi(phi1 - phi2);
-	float dR = TMath::Sqrt(deta*deta+dphi*dphi);
-	return dR;
-}
-
-void Frequency_plot_5MC(const TString samplename="KeeMC",
-											const int nEvents = -1,
-											const int FixedMuEtMin = 0,
-											const float MuEtaCut = 2.5,
-											const float EgEtaCut = 2.5,
-											const float EgEtCut = 2.5){
+void Frequency_plot_13MC(const TString samplename="ZeroBias2018",
+									const int nEvents = -1,
+									const float MuEtaCut = 5){
 	
 	gBenchmark->Start("L1NtupleReader");
 	gROOT->SetBatch(1);
 	gStyle->SetOptStat(0);
 	
 	TString MuEtaCut_str = std::to_string(MuEtaCut).substr(0, std::to_string(MuEtaCut).find(".") + 2);
-	TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
-	TString EgEtCut_str = std::to_string(EgEtCut).substr(0, std::to_string(EgEtCut).find(".") + 2);
-	
 	
 	// Local variables:
 	UShort_t N_eg, N_mu, N_genpart;
@@ -62,10 +49,19 @@ void Frequency_plot_5MC(const TString samplename="KeeMC",
 	float Et_muon, Eta_muon, Phi_muon, Iso_muon;
 	
 	// Histograms
-	TString histname = "#Delta R (MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta"+MuEtaCut_str+"_EgLsLMinEt" + EgEtCut_str + "MaxEta"+EgEtaCut_str +"_dieleLQ2"+")";
-	TH1F* hist_11 = new TH1F("dR",histname, 50, 0, 2);
+	// TH1F* hist_11 = new TH1F("NEg","Number of e/#gamma", 40, 0, 20);
+	// TH1F* hist_12 = new TH1F("EgEt","e/#gamma E_{T}", 100, 0, 10);
+	// TH1F* hist_13 = new TH1F("EgEta","e/#gamma #eta", 100, -5, 5);
+	// TH1F* hist_14 = new TH1F("EgPhi","e/#gamma #phi", 100, -3.15, 3.15);
+	// TH1F* hist_21 = new TH1F("NMu","Number of #mu", 20, 0, 10);
+	// TH1F* hist_22 = new TH1F("MuEt","#mu E_{T}", 100, 0, 100);
+	// TH1F* hist_23 = new TH1F("MuEta","#mu #eta", 100, -5, 5);
+	// TH1F* hist_24 = new TH1F("MuPhi","#mu #phi", 100, -3.15, 3.15);
 	
-	TTreeReader fReader_L1;  //!the tree reader
+	TString histname = "";
+	TH2F* hist2d_1 = new TH2F("hist",histname,10,0,10,9,1,10);
+	
+TTreeReader fReader_L1;  //!the tree reader
 	TTreeReaderValue<UShort_t> nEGs = {fReader_L1, "nEGs"};
 	TTreeReaderArray<float> egEt    = {fReader_L1, "egEt"};
 	TTreeReaderArray<float> egEta   = {fReader_L1, "egEta"};
@@ -88,7 +84,8 @@ void Frequency_plot_5MC(const TString samplename="KeeMC",
 	TTreeReaderArray<int> genPartId    = {fReader_GEN, "partId"};
 	TTreeReaderArray<int> genPartStat    = {fReader_GEN, "partStat"};
 	TTreeReaderArray<int> genPartParent    = {fReader_GEN, "partParent"};
-	
+		
+	int counter_0 = 0;
 	ifstream insample(samplename+TString(".txt"));
 	std::string line;
 	while (std::getline(insample, line)){
@@ -124,50 +121,24 @@ void Frequency_plot_5MC(const TString samplename="KeeMC",
 			
 			N_eg = *nEGs;
 			N_mu = *nMuons;
-			N_genpart = *nGenPart;									 
+			N_genpart = *nGenPart;		
+
+			counter_0++;			
 			
-			int MuSel_index = -99;
-			std::vector<int> EgSel_index;
-			
-			//find GEN level electrons from B+ decay
-			std::vector<TLorentzVector> gen_el;
-			for(UInt_t i=0; i<N_genpart; i++){
-				if(abs(genPartId[i]) != 11 || abs(genPartParent[i]) != 521) continue; 
-				TLorentzVector el;
-				el.SetPtEtaPhiE(genPartPt[i],genPartEta[i],genPartPhi[i],genPartE[i]);
-				gen_el.push_back(el);
+			for(int MuThr = 1; MuThr < 10; MuThr+=1){
+					float MuEt_temp = 0.01;
+
+				
+				for(UInt_t i=0; i<N_mu; i++){
+					if(abs(muonEta[i]) > MuEtaCut) continue;
+					if(muonQual[i] < 12) continue;
+					MuEt_temp = muonEt[i];
+					break;
+				}
+				
+				if(MuEt_temp >= MuThr)
+					hist2d_1->Fill(0.0, MuThr);
 			}
-			if(gen_el.size() < 2){
-				cout<<"Did not find 2 GEN level electrons!";
-				continue;
-			}
-			
-			for(UInt_t i=0; i<N_mu; i++){
-				if(abs(muonEta[i]) > MuEtaCut || muonEt[i] < FixedMuEtMin) continue;
-				if(muonQual[i] < 12) continue;
-				MuSel_index = i;
-				break;
-			}
-			if(MuSel_index < 0) continue;
-			
-			for(UInt_t i=0; i<N_eg; i++){
-				if(abs(egEta[i]) > EgEtaCut || egEt[i] < EgEtCut) continue;
-				//if(deltaR(egEta[i], egPhi[i], gen_el[0].Eta(), gen_el[0].Phi()) > 0.3 && deltaR(egEta[i], egPhi[i], gen_el[1].Eta(), gen_el[1].Phi()) > 0.3) continue;
-				EgSel_index.push_back(i);
-			}
-			if(EgSel_index.size() < 2) continue;
-			
-			TLorentzVector eg1, eg2;
-			eg1.SetPtEtaPhiM(egEt[EgSel_index[0]],egEta[EgSel_index[0]],egPhi[EgSel_index[0]],0.0005110);
-			eg2.SetPtEtaPhiM(egEt[EgSel_index[1]],egEta[EgSel_index[1]],egPhi[EgSel_index[1]],0.0005110);
-			
-			float invmass = (eg1+eg2).M();
-			
-			float dR = deltaR(egEta[EgSel_index[0]], egPhi[EgSel_index[0]], egEta[EgSel_index[1]], egPhi[EgSel_index[1]]);
-			
-			if(1.1 <= invmass*invmass && invmass*invmass <= 6.25)
-			//if(14.82 < invmass*invmass)
-				hist_11->Fill(dR);
 			
 		}//end of event loop
 		infile->Close();
@@ -175,20 +146,26 @@ void Frequency_plot_5MC(const TString samplename="KeeMC",
 	
 	TAxis* yaxis = NULL;
 	TAxis* xaxis = NULL;
-	
+		
+	Int_t refBinGlobal = hist2d_1->GetBin(1,10);
+	float refBinEntry = hist2d_1->GetBinContent(refBinGlobal);
+	//hist2d_1->Scale(1/refBinEntry);
+	hist2d_1->Scale(1.0/counter_0);
 	
 	TCanvas *c11 = new TCanvas("","",1200,900);
 	c11->cd();
-	yaxis = hist_11->GetYaxis();
-	xaxis = hist_11->GetXaxis();
-	yaxis->SetTitle("Entries / 0.04");
-	xaxis->SetTitle("#Delta R (e/#gamma_{L}, e/#gamma_{sL})");
+	yaxis = hist2d_1->GetYaxis();
+	xaxis = hist2d_1->GetXaxis();
+	xaxis->SetTitle("Threshold (>=) on E_{T e/#gamma} [GeV]");
 	xaxis->SetTitleOffset(1.2);
-	hist_11->Draw("HIST");
-	TString outName = "Histo_dR_MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta"+MuEtaCut_str+"_EgLsLMinEt" + EgEtCut_str + "MaxEta"+EgEtaCut_str +"_dieleLQ2"+".png";
-	c11->Print(outName);
-	
-	cout<<hist_11->GetEntries()<<endl;
+	yaxis->SetTitle("Threshold (>=) on p_{T #mu} [GeV]");
+	hist2d_1->Draw("COLZ TEXT");
+	TString outName = "Histo_frequency_MuEta" + MuEtaCut_str;
+	if(samplename.Contains("MC"))
+		outName = "Histo_efficiency_MuEta" + MuEtaCut_str;
+	gStyle->SetOptTitle(0);
+	c11->Print(outName+".png");
+	c11->Print(outName+".svg");
 		
 	gBenchmark->Show("L1NtupleReader");
 }

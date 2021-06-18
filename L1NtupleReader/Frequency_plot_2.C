@@ -105,27 +105,24 @@ void Frequency_plot_2(const TString samplename="ZeroBias2018",
 			for(int EglThr = 0; EglThr < 10; EglThr+=1){
 				for(int EgsThr = 0; EgsThr <= EglThr; EgsThr+=1){
 			
-			float MuEt_temp = 0;
-			float EglEt_temp = 0;
-			float EgsEt_temp = 0;
+			int MuSel_index = -99;
+			std::vector<int> EgSel_index;
 			
-			for(UInt_t i=0; i<N_mu; i++){
-				if(abs(muonEta[i]) > 1.5) continue;
-				if(muonQual[i] < 12) continue;
-				MuEt_temp = muonEt[i];
-				break;
-			}
-			if(MuEt_temp < FixedMuEtMin) continue;
+			// for(UInt_t i=0; i<N_mu; i++){
+				// if(abs(muonEta[i]) > MuEtaCut || muonEt[i] < FixedMuEtMin) continue;
+				// if(muonQual[i] < 12) continue;
+				// MuSel_index = i;
+				// break;
+			// }
+			// if(MuSel_index < 0) continue;
 			
 			for(UInt_t i=0; i<N_eg; i++){
-				EglEt_temp = egEt[i];
-				if(i+1 < N_eg){
-					EgsEt_temp = egEt[i+1];
-				}
-				break;
+				if(abs(egEta[i]) > 1) continue;
+				EgSel_index.push_back(i);
 			}
+			if(EgSel_index.size() < 2) continue;
 			
-			if(EglEt_temp >= EglThr && EgsEt_temp >= EgsThr)
+			if(egEt[EgSel_index[0]] >= EglThr && egEt[EgSel_index[1]] >= EgsThr)
 				hist2d_1->Fill(EglThr, EgsThr);
 			
 				}
@@ -140,7 +137,8 @@ void Frequency_plot_2(const TString samplename="ZeroBias2018",
 	
 	Int_t refBinGlobal = hist2d_1->GetBin(1,1);
 	float refBinEntry = hist2d_1->GetBinContent(refBinGlobal);
-	hist2d_1->Scale(1/refBinEntry);
+	//hist2d_1->Scale(1/refBinEntry);
+	//hist2d_1->Scale(1.0/1098);
 	
 	TCanvas *c11 = new TCanvas("","",1200,900);
 	c11->cd();
@@ -150,10 +148,11 @@ void Frequency_plot_2(const TString samplename="ZeroBias2018",
 	xaxis->SetTitle("Threshold (>=) on E_{T e/#gamma L} [GeV]");
 	xaxis->SetTitleOffset(1.2);
 	hist2d_1->Draw("COLZ TEXT");
-	TString outName = "Histo_frequency_MuMinEt"+std::to_string(FixedMuEtMin)+".png";
+	TString outName = "Histo_frequency_MuMinEt"+std::to_string(FixedMuEtMin);
 	if(samplename.Contains("MC"))
-		outName = "Histo_efficiency_MuMinEt"+std::to_string(FixedMuEtMin)+".png";
-	c11->Print(outName);
+		outName = "Histo_efficiency_MuMinEt"+std::to_string(FixedMuEtMin);
+	c11->Print(outName+".png");
+	c11->Print(outName+".svg");
 		
 	gBenchmark->Show("L1NtupleReader");
 }
