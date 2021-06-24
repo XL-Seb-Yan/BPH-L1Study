@@ -33,117 +33,146 @@
 
 using namespace std;
 
+float deltaR(float eta1, float phi1, float eta2, float phi2){
+  float deta = eta1 - eta2;
+  float dphi = TVector2::Phi_mpi_pi(phi1 - phi2);
+  float dR = TMath::Sqrt(deta*deta+dphi*dphi);
+  return dR;
+}
+
 void Frequency_plot_4(const TString samplename="ZeroBias2018",
-											const int nEvents = -1,
-											const int FixedMuEtMin = 0,
-											const float MuEtaCut = 2.5,
-											const float EgEtaCut = 2.5){
-	
-	gBenchmark->Start("L1NtupleReader");
-	gROOT->SetBatch(1);
-	gStyle->SetOptStat(0);
-	
-	TString MuEtaCut_str = std::to_string(MuEtaCut).substr(0, std::to_string(MuEtaCut).find(".") + 2);
-	TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
-	
-	// Local variables:
-	UShort_t N_eg, N_mu;
-	float Et_eg, Eta_eg, Phi_eg, Iso_eg;
-	float Et_muon, Eta_muon, Phi_muon, Iso_muon;
-	
-	// Histograms
-	TString histname = "#Delta R (MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta"+MuEtaCut_str+"_EgMaxEta"+EgEtaCut_str + ")";
-	TH1F* hist_11 = new TH1F("dR",histname, 50, 0, 5);
-	
-	TTreeReader fReader_L1;  //!the tree reader
-	TTreeReaderValue<UShort_t> nEGs = {fReader_L1, "nEGs"};
-	TTreeReaderArray<float> egEt    = {fReader_L1, "egEt"};
-	TTreeReaderArray<float> egEta   = {fReader_L1, "egEta"};
-	TTreeReaderArray<float> egPhi   = {fReader_L1, "egPhi"};
-	TTreeReaderArray<short> egIso   = {fReader_L1, "egIso"};
-	
-	TTreeReaderValue<UShort_t> nMuons = {fReader_L1, "nMuons"};
-	TTreeReaderArray<float> muonEt    = {fReader_L1, "muonEt"};
-	TTreeReaderArray<float> muonEta   = {fReader_L1, "muonEta"};
-	TTreeReaderArray<float> muonPhi   = {fReader_L1, "muonPhi"};
-	TTreeReaderArray<unsigned short> muonIso   = {fReader_L1, "muonIso"};
-	TTreeReaderArray<unsigned short> muonQual   = {fReader_L1, "muonQual"};
-		
-	ifstream insample(samplename+TString(".txt"));
-	std::string line;
-	while (std::getline(insample, line)){
-		TString file_name(line);
-		
-		// Read input file and get the TTrees
-		cout << "Processing " << file_name <<endl; cout.flush();
-		TFile *infile = TFile::Open(file_name,"READ");
-		assert(infile);
-	
-		TString treename = "l1UpgradeEmuTree";
-		if(samplename.Contains("MC"))
-			treename = "l1UpgradeTree";
-		TDirectoryFile *df = (TDirectoryFile *)infile->Get(treename);
-		TTree* eventTree = (TTree*)df->Get("L1UpgradeTree");
-		assert(eventTree);
-		
-		fReader.SetTree(eventTree);
-		
-		int Evt2Process = eventTree->GetEntries();
-		if(nEvents != -1)
-			Evt2Process = nEvents;
-		
-		for(UInt_t ientry=0; ientry<Evt2Process; ientry++){
-			fReader.SetLocalEntry(ientry);
-			
-			N_eg = *nEGs;
-			N_mu = *nMuons;
-			
-			float MuEt_temp = 0;
-			float EglEt_temp = 0;
-			
-			int MuSel_index = -99;
-			int EgSel_index = -99;
-			
-			for(UInt_t i=0; i<N_mu; i++){
-				if(abs(muonEta[i]) > MuEtaCut || muonEt[i] < FixedMuEtMin) continue;
-				if(muonQual[i] < 12) continue;
-				MuSel_index = i;
-				break;
-			}
-			if(MuSel_index < 0) continue;
-			
-			for(UInt_t i=0; i<N_eg; i++){
-				if(abs(egEta[i]) > EgEtaCut) continue;
-				EgSel_index = i;
-				break;
-			}
-			if(EgSel_index < 0) continue;
-			
-			float deta = muonEta[MuSel_index]-egEta[EgSel_index];
-      float dphi = TVector2::Phi_mpi_pi(muonPhi[MuSel_index]-egPhi[EgSel_index]);
-      float dR = TMath::Sqrt(deta*deta+dphi*dphi);
-			
-			hist_11->Fill(dR);
-			
-		}//end of event loop
-		infile->Close();
-	}//end of file loop
-	
-	TAxis* yaxis = NULL;
-	TAxis* xaxis = NULL;
-	
-	TCanvas *c11 = new TCanvas("","",1200,900);
-	c11->cd();
-	yaxis = hist_11->GetYaxis();
-	xaxis = hist_11->GetXaxis();
-	yaxis->SetTitle("Entries / 0.1");
-	xaxis->SetTitle("#Delta R (#mu_{L}, e/#gamma_{L})");
-	xaxis->SetTitleOffset(1.2);
-	hist_11->Draw("HIST");
-	TString outName = "Histo_dR_MuMinEt"+std::to_string(FixedMuEtMin)+"MaxEta_"+MuEtaCut_str+"_EgMaxEta"+EgEtaCut_str+".png";
-	c11->Print(outName);
-	
-	cout<<hist_11->GetEntries()<<endl;
-	
-	gBenchmark->Show("L1NtupleReader");
+                      const int nEvents = -1,
+                      const float MuEtCut = 3,
+                      const float MuEtaCut = 2.5,
+                      const float EgEtaCut = 1.0){
+  
+  gBenchmark->Start("L1NtupleReader");
+  gROOT->SetBatch(1);
+  gStyle->SetOptStat(0);
+  //gStyle->SetOptTitle(0);
+  gStyle->SetTitleSize(0.035,"XYZ");
+  gStyle->SetLabelSize(0.035,"XYZ");
+  gStyle->SetFrameLineWidth(2);
+  gStyle->SetLegendTextSize(0.03);
+  gStyle->SetBarWidth(2);
+  gStyle->SetHistLineWidth(2);
+  
+  TString MuEtCut_str = std::to_string(MuEtCut).substr(0, std::to_string(MuEtCut).find(".") + 2);
+  TString MuEtaCut_str = std::to_string(MuEtaCut).substr(0, std::to_string(MuEtaCut).find(".") + 2);
+  TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
+  
+  // Local variables:
+  UShort_t N_eg, N_mu;
+  float Et_eg, Eta_eg, Phi_eg, Iso_eg;
+  float Et_muon, Eta_muon, Phi_muon, Iso_muon;
+  
+  // Histograms
+  TString histname = "Rate (Mu"+MuEtCut_str+"er"+MuEtaCut_str+"_2Eler"+EgEtaCut_str+"_dR1.0)";
+  TH2F* hist2d_1 = new TH2F("EgEtl_EgEts",histname,9,1,10,9,1,10);
+  
+  TTreeReader fReader;  //!the tree reader
+  TTreeReaderValue<UShort_t> nEGs = {fReader, "nEGs"};
+  TTreeReaderArray<float> egEt    = {fReader, "egEt"};
+  TTreeReaderArray<float> egEta   = {fReader, "egEta"};
+  TTreeReaderArray<float> egPhi   = {fReader, "egPhi"};
+  TTreeReaderArray<short> egIso   = {fReader, "egIso"};
+  
+  TTreeReaderValue<UShort_t> nMuons = {fReader, "nMuons"};
+  TTreeReaderArray<float> muonEt    = {fReader, "muonEt"};
+  TTreeReaderArray<float> muonEta   = {fReader, "muonEta"};
+  TTreeReaderArray<float> muonPhi   = {fReader, "muonPhi"};
+  TTreeReaderArray<unsigned short> muonIso   = {fReader, "muonIso"};
+  TTreeReaderArray<unsigned short> muonQual   = {fReader, "muonQual"};
+  
+  for(int EgEtThr = 0; EgEtThr < 10; EgEtThr++){
+    int counter_0 = 0;
+    ifstream insample(samplename+TString(".txt"));
+    std::string line;
+    cout<<"Running through: "<<EgEtThr<<endl;
+      while (std::getline(insample, line)){
+      TString file_name(line);
+
+      // Read input file and get the TTrees
+      cout << "Processing " << file_name <<endl; cout.flush();
+      TFile *infile = TFile::Open(file_name,"READ");
+      assert(infile);
+
+      TString treename = "l1UpgradeEmuTree";
+      if(samplename.Contains("MC"))
+        treename = "l1UpgradeTree";
+      TDirectoryFile *df = (TDirectoryFile *)infile->Get(treename);
+      TTree* eventTree = (TTree*)df->Get("L1UpgradeTree");
+      assert(eventTree);
+
+      fReader.SetTree(eventTree);
+
+      int Evt2Process = eventTree->GetEntries();
+      if(nEvents != -1)
+        Evt2Process = nEvents;
+
+      for(UInt_t ientry=0; ientry<Evt2Process; ientry++){
+        fReader.SetLocalEntry(ientry);
+        counter_0++;
+        
+        N_eg = *nEGs;
+        N_mu = *nMuons;
+        
+        std::vector<int> EgSel_index;
+        
+        bool isFiredMu = false;
+        for(UInt_t i=0; i<N_mu; i++){
+						if(abs(muonEta[i]) > MuEtaCut || muonEt[i] < MuEtCut) continue;
+						if(muonQual[i] < 12) continue;
+						isFiredMu = true;
+						break;
+					}
+        
+        for(UInt_t i=0; i<N_eg; i++){
+          if(abs(egEta[i]) > EgEtaCut || egEt[i] < EgEtThr) continue;
+          EgSel_index.push_back(i);
+        }
+        if(EgSel_index.size() < 2) continue;
+        
+        bool isFiredEl = false;
+        for(int i=0; i<EgSel_index.size()-1; i++){
+          for(int j=i+1; j<EgSel_index.size(); j++){
+            float dR = deltaR(egEta[EgSel_index[i]],egPhi[EgSel_index[i]],egEta[EgSel_index[j]],egPhi[EgSel_index[j]]);
+            if(dR > 1.0) continue;
+            // TLorentzVector eg1, eg2;
+            // eg1.SetPtEtaPhiM(egEt[EgSel_index[i]],egEta[EgSel_index[i]],egPhi[EgSel_index[i]],0.0005110);
+            // eg2.SetPtEtaPhiM(egEt[EgSel_index[j]],egEta[EgSel_index[j]],egPhi[EgSel_index[j]],0.0005110);
+            // float invmass = (eg1+eg2).M();
+            // hist_11->Fill(dR);
+            // hist_12->Fill(invmass);
+            // hist_13->Fill(invmass / dR);
+            isFiredEl = true;
+          }
+        }
+        
+        if(isFiredMu && isFiredEl)
+          hist2d_1->Fill(EgEtThr+0.5,EgEtThr+0.5);
+        
+      }//end of event loop
+      infile->Close();
+    }//end of file loop
+    cout<<counter_0<<endl;
+  }
+  
+  TAxis* yaxis = NULL;
+  TAxis* xaxis = NULL;
+  
+  TCanvas *c11 = new TCanvas("","",1200,900);
+  c11->cd();
+  hist2d_1->SetLineWidth(2);
+  yaxis = hist2d_1->GetYaxis();
+  xaxis = hist2d_1->GetXaxis();
+  yaxis->SetTitle("Threshold on E_{T e/#gamma sL} [GeV]");
+  xaxis->SetTitle("Threshold on E_{T e/#gamma L} [GeV]");
+  xaxis->SetTitleOffset(1.2);
+  hist2d_1->Draw("COLZ TEXT");
+  TString outName = "Rate_Mu"+MuEtCut_str+"er"+MuEtaCut_str+"_2Eler"+EgEtaCut_str+"_dR1.0";
+  c11->Print(outName+".png");
+  //c11->Print(outName+".svg");
+    
+  gBenchmark->Show("L1NtupleReader");
 }

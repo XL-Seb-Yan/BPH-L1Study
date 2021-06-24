@@ -55,7 +55,7 @@ while ret == 0:
       jdl.write("Output = "    + jobDir + "out/$(ProcId).out\n")
       jdl.write("Error = "     + jobDir + "err/$(ProcId).err\n")
       jdl.write("Log = "       + jobDir + "log/$(ProcId).log\n")
-      jdl.write("Arguments = " + eosDir + " " + jobName + " " + rel + " $(ProcId) " + jobCfg + " " + filelist_name + " " + fileName + " " + proxy_path + "\n")
+      jdl.write("Arguments = " + eosDir + " " + jobName + " " + rel + " $(ProcId) " + jobCfg + " filelist_tmp_$(ProcId).list " + fileName + " " + proxy_path + "\n")
       # jdl.write("+MaxRuntime = 28800\n")
       # jdl.write("on_exit_remove = (ExitBySignal == False) && (ExitCode == 0)\n")
       # jdl.write("max_retries = 3\n")

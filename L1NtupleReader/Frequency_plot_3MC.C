@@ -40,27 +40,27 @@ float deltaR(float eta1, float phi1, float eta2, float phi2){
 	return dR;
 }
 
-void Frequency_plot_4MC(const TString samplename="ZeroBias2018",
-                      const int nEvents = -1,
-                      const float MuEtCut = 3,
-                      const float MuEtaCut = 2.5,
-                      const float EgEtaCut = 1.0){
+void Frequency_plot_3MC(const TString samplename="KeeMC",
+											const int nEvents = -1,
+											const float EgEtaCut = 2.5){
 	
 	gBenchmark->Start("L1NtupleReader");
 	gROOT->SetBatch(1);
 	gStyle->SetOptStat(0);
 	
-  TString MuEtCut_str = std::to_string(MuEtCut).substr(0, std::to_string(MuEtCut).find(".") + 2);
-  TString MuEtaCut_str = std::to_string(MuEtaCut).substr(0, std::to_string(MuEtaCut).find(".") + 2);
-  TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
+	TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
 	
 	// Local variables:
 	UShort_t N_eg, N_mu, N_genpart;
 	float Et_eg, Eta_eg, Phi_eg, Iso_eg;
 	float Et_muon, Eta_muon, Phi_muon, Iso_muon;
 	
-	TString histname = "Mu_Eta" + MuEtaCut_str + "_El_Eta" + EgEtaCut_str;
-	TH2F* hist2d_1 = new TH2F("hist",histname,10,0,10,9,1,10);
+	// Histograms
+	TString histname = "Eff (Double_el_eta"+EgEtaCut_str+"_dR1.0)";
+  TH2F* hist2d_1 = new TH2F("EgEtl_EgEts",histname,9,1,10,9,1,10);
+	TH1F* hist_11 = new TH1F("dR1","#Delta R of matching",70,-2,5);
+	TH1F* hist_12 = new TH1F("dR2","#Delta R of matching",70,-2,5);
+	TH1F* hist_13 = new TH1F("mf","Matching flag of di-EG fired trigger",40,0,20);
 	
 	TTreeReader fReader_L1;  //!the tree reader
 	TTreeReaderValue<UShort_t> nEGs = {fReader_L1, "nEGs"};
@@ -85,11 +85,10 @@ void Frequency_plot_4MC(const TString samplename="ZeroBias2018",
 	TTreeReaderArray<int> genPartId    = {fReader_GEN, "partId"};
 	TTreeReaderArray<int> genPartStat    = {fReader_GEN, "partStat"};
 	TTreeReaderArray<int> genPartParent    = {fReader_GEN, "partParent"};
-		
-	int globcounter_0, globcounter_1;
-	for(int EgEtThr = 2; EgEtThr < 10; EgEtThr+=1){
-		int counter_0 = 0; //count how many events have two right electrons at GEN level
-		int counter_1 = 0; //count how many events have two right electrons and final state muon at GEN level
+	
+	int globcounter_0;
+	for(int EgEtThr = 7; EgEtThr < 8; EgEtThr++){
+    int counter_0 = 0; //count how many events have two right electrons at GEN level
 		ifstream insample(samplename+TString(".txt"));
 		std::string line;
 		while (std::getline(insample, line)){
@@ -120,18 +119,21 @@ void Frequency_plot_4MC(const TString samplename="ZeroBias2018",
 				Evt2Process_L1 = nEvents;
 			
 			for(UInt_t ientry=0; ientry<Evt2Process_L1; ientry++){
+			//for(UInt_t ientry=0; ientry<1000; ientry++){
 				fReader_L1.SetLocalEntry(ientry);
 				fReader_GEN.SetLocalEntry(ientry);
+				
 				if(ientry % 10000 == 0) cout<<"Processing: "<<float(ientry) / Evt2Process_L1<<endl;
 				
 				N_eg = *nEGs;
 				N_mu = *nMuons;
-				N_genpart = *nGenPart;
+				N_genpart = *nGenPart;									 
 				
+				int MuSel_index = -99;
 				std::vector<int> EgSel_index;
 				
 				//find GEN level electrons from B+ decay
-				std::vector<TLorentzVector> gen_el;	
+				std::vector<TLorentzVector> gen_el;
 				for(UInt_t i=0; i<N_genpart; i++){
 					if(abs(genPartId[i]) != 11 || abs(genPartParent[i]) != 521) continue; 
 					TLorentzVector el;
@@ -143,46 +145,48 @@ void Frequency_plot_4MC(const TString samplename="ZeroBias2018",
 					continue;
 				}
 				counter_0++;
-				
-				//find GEN level muons with status 1
-				std::vector<TLorentzVector> gen_mu;	
-				for(UInt_t i=0; i<N_genpart; i++){
-					if(abs(genPartId[i]) != 13 || genPartStat[i] != 1) continue; 
-					TLorentzVector mu;
-					mu.SetPtEtaPhiE(genPartPt[i],genPartEta[i],genPartPhi[i],genPartE[i]);
-					gen_mu.push_back(mu);
-				}
-				if(gen_mu.size() < 1){
-					//cout<<"Did not find 1 GEN level muons!";
-					continue;
-				}
-				counter_1++;
-
-				// L1
-				bool isMuPass = false;
-				bool isEgPass = false;
-				
-				for(UInt_t i=0; i<N_mu; i++){
-					if(abs(muonEta[i]) > MuEtaCut || muonEt[i] < MuEtCut) continue;
-					if(muonQual[i] < 12) continue;
-					float mindR = 99;
-					for(int iGENmu = 0; iGENmu < gen_mu.size(); iGENmu++){
-						float dR = deltaR(muonEta[i], muonPhi[i], gen_mu[iGENmu].Eta(), gen_mu[iGENmu].Phi());
-						if(dR < mindR) mindR = dR;
+				if(N_eg < 2) continue;
+				/*
+				// Matching study 1
+				float mindR_0 = 99;
+				float mindR_1 = 99;
+				int matched_0 = -1;
+				int matched_1 = -1;
+				// matching the first GEN electron
+				for(UInt_t i=0; i<N_eg; i++){
+					if(abs(egEta[i]) > EgEtaCut || egEt[i] < EgEtThr) continue;
+					//if(deltaR(egEta[i], egPhi[i], gen_el[0].Eta(), gen_el[0].Phi()) > 0.4 && deltaR(egEta[i], egPhi[i], gen_el[1].Eta(), gen_el[1].Phi()) > 0.4) continue;
+					if(deltaR(egEta[i], egPhi[i], gen_el[0].Eta(), gen_el[0].Phi()) < mindR_0){
+						mindR_0 = deltaR(egEta[i], egPhi[i], gen_el[0].Eta(), gen_el[0].Phi());
+						matched_0 = i;
 					}
-					if(mindR > 0.4) continue;
-					isMuPass = true;
-					break;
 				}
-				
+				if(matched_0 == -1) mindR_0 = -1;
+				// matching the second GEN electron
+				for(UInt_t i=0; i<N_eg; i++){
+					if(i == matched_0) continue;
+					if(abs(egEta[i]) > EgEtaCut || egEt[i] < EgEtThr) continue;
+					//if(deltaR(egEta[i], egPhi[i], gen_el[0].Eta(), gen_el[0].Phi()) > 0.4 && deltaR(egEta[i], egPhi[i], gen_el[1].Eta(), gen_el[1].Phi()) > 0.4) continue;
+					if(deltaR(egEta[i], egPhi[i], gen_el[1].Eta(), gen_el[1].Phi()) < mindR_1){
+						mindR_1 = deltaR(egEta[i], egPhi[i], gen_el[1].Eta(), gen_el[1].Phi());
+						matched_1 = i;
+					}
+				}
+				if(matched_1 == -1) mindR_1 = -1;
+				hist_11->Fill(mindR_0);
+				hist_12->Fill(mindR_1);
+				*/
+
+/*
 				// Matching method 1
 				for(UInt_t i=0; i<N_eg; i++){
 					if(abs(egEta[i]) > EgEtaCut || egEt[i] < EgEtThr) continue;
-					if(deltaR(egEta[i], egPhi[i], gen_el[0].Eta(), gen_el[0].Phi()) > 0.4 && deltaR(egEta[i], egPhi[i], gen_el[1].Eta(), gen_el[1].Phi()) > 0.4) continue;
+					if(deltaR(egEta[i], egPhi[i], gen_el[0].Eta(), gen_el[0].Phi()) > 0.2 && deltaR(egEta[i], egPhi[i], gen_el[1].Eta(), gen_el[1].Phi()) > 0.2) continue;
 					EgSel_index.push_back(i);
 				}
 				if(EgSel_index.size() < 2) continue;
 				
+				bool isFired = false;
 				for(int i=0; i<EgSel_index.size()-1; i++){
 					for(int j=i+1; j<EgSel_index.size(); j++){
 						float dR = deltaR(egEta[EgSel_index[i]],egPhi[EgSel_index[i]],egEta[EgSel_index[j]],egPhi[EgSel_index[j]]);
@@ -194,11 +198,42 @@ void Frequency_plot_4MC(const TString samplename="ZeroBias2018",
 						// hist_11->Fill(dR);
 						// hist_12->Fill(invmass);
 						// hist_13->Fill(invmass / dR);
-						isEgPass = true;
+						isFired = true;
 					}
 				}
-					
+				*/
 				
+
+				
+				// Matching method 2
+				for(UInt_t i=0; i<N_eg; i++){
+					if(abs(egEta[i]) > EgEtaCut || egEt[i] < EgEtThr) continue;
+					EgSel_index.push_back(i);
+				}
+				if(EgSel_index.size() < 2) continue;
+				
+				bool isFired = false;
+				int matching_flag = 0;
+				for(int i=0; i<EgSel_index.size()-1; i++){
+					for(int j=i+1; j<EgSel_index.size(); j++){
+						float dR = deltaR(egEta[EgSel_index[i]],egPhi[EgSel_index[i]],egEta[EgSel_index[j]],egPhi[EgSel_index[j]]);
+						if(dR > 1.0) continue;
+						bool matching_0_0 = false;
+						bool matching_0_1 = false;
+						bool matching_1_0 = false;
+						bool matching_1_1 = false;
+						if(deltaR(egEta[EgSel_index[i]], egPhi[EgSel_index[i]], gen_el[0].Eta(), gen_el[0].Phi()) < 0.4) matching_0_0 = true;
+						if(deltaR(egEta[EgSel_index[i]], egPhi[EgSel_index[i]], gen_el[1].Eta(), gen_el[1].Phi()) < 0.4) matching_0_1 = true;
+						if(deltaR(egEta[EgSel_index[j]], egPhi[EgSel_index[j]], gen_el[0].Eta(), gen_el[0].Phi()) < 0.4) matching_1_0 = true;
+						if(deltaR(egEta[EgSel_index[j]], egPhi[EgSel_index[j]], gen_el[1].Eta(), gen_el[1].Phi()) < 0.4) matching_1_1 = true;
+						matching_flag = matching_0_0*8 + matching_0_1*4  + matching_1_0*2 + matching_1_1*1;
+						if(matching_flag == 6 || matching_flag == 9)
+							isFired = true;
+						hist_13->Fill(matching_flag);
+					}
+				}
+				
+				/*
 				// Check if this event has Kee falling withing the acceptance
 				bool isElInAcceptance_0 = false;
 				bool isElInAcceptance_1 = false;
@@ -225,38 +260,72 @@ void Frequency_plot_4MC(const TString samplename="ZeroBias2018",
 				}
 				if(matchL1Index_1 < 0 || mindR_1 > 0.4) continue;
 				if(egEt[matchL1Index_1] > 2 && abs(egEta[matchL1Index_1]) < 2.4) isElInAcceptance_1 = true;
+				*/
+					
 				
-				
-				//if(isMuPass && isEgPass)
-				if(isMuPass && isEgPass && isElInAcceptance_0 && isElInAcceptance_1)
+				if(isFired)
+				//if(isFired && isElInAcceptance_0 && isElInAcceptance_1)
 					hist2d_1->Fill(EgEtThr+0.5,EgEtThr+0.5);
 				
-				
+
+	
 			}//end of event loop
 			infile->Close();
 		}//end of file loop
 		globcounter_0 = counter_0;
-		globcounter_1 = counter_1;
 	}
-	cout<<globcounter_0<<" "<<globcounter_1<<endl;
+	cout<<globcounter_0<<endl;
 	hist2d_1->Scale(1.0 / globcounter_0);
 	
 	TAxis* yaxis = NULL;
 	TAxis* xaxis = NULL;
 	
 	TCanvas *c11 = new TCanvas("","",1200,900);
-	c11->cd();
-	hist2d_1->SetLineWidth(2);
-	yaxis = hist2d_1->GetYaxis();
-	xaxis = hist2d_1->GetXaxis();
-	xaxis->SetTitle("Threshold (>=) on E_{T e/#gamma} [GeV]");
-	xaxis->SetTitleOffset(1.2);
-	yaxis->SetTitle("Threshold (>=) on p_{T #mu} [GeV]");
-	hist2d_1->Draw("COLZ TEXT");
-	TString outName = "EffAcc_Mu"+MuEtCut_str+"er"+MuEtaCut_str+"_2Eler"+EgEtaCut_str+"_dR1.0";
-	gStyle->SetOptTitle(0);
-	c11->Print(outName+".png");
-	//c11->Print(outName+".svg");
+  c11->cd();
+  hist2d_1->SetLineWidth(2);
+  yaxis = hist2d_1->GetYaxis();
+  xaxis = hist2d_1->GetXaxis();
+  yaxis->SetTitle("Threshold on E_{T e/#gamma sL} [GeV]");
+  xaxis->SetTitle("Threshold on E_{T e/#gamma L} [GeV]");
+  xaxis->SetTitleOffset(1.2);
+  hist2d_1->Draw("COLZ TEXT");
+  TString outName = "Eff_double_el_Eta"+EgEtaCut_str+"_dR1p0_matching2_0p4";
+  c11->Print(outName+".png");
+  //c11->Print(outName+".svg");
+	
+	TLegend *leg = new TLegend(0.6,0.75,0.9,0.9);
+	TCanvas *c12 = new TCanvas("","",1200,900);
+  c12->cd();
+  hist_11->SetLineWidth(2);
+	hist_12->SetLineWidth(2);
+	hist_11->SetLineColor(2);
+	//hist_11->SetFillColorAlpha(2,0.5);
+  yaxis = hist_11->GetYaxis();
+  xaxis = hist_11->GetXaxis();
+  xaxis->SetTitle("#Delta R");
+  yaxis->SetTitle("Entries / 0.1");
+	yaxis->SetRangeUser(0.1,1000000);
+  xaxis->SetTitleOffset(1.2);
+  hist_11->Draw("HIST");
+	hist_12->Draw("SAME");
+	leg->AddEntry(hist_11,"electron 1");
+	leg->AddEntry(hist_12,"electron 2");
+	leg->Draw();
+	c12->SetLogy();
+  //c12->Print("dR.png");
+	
+	TCanvas *c13 = new TCanvas("","",1200,900);
+  c13->cd();
+  hist_13->SetLineWidth(2);
+	hist_13->SetLineWidth(2);
+  yaxis = hist_13->GetYaxis();
+  xaxis = hist_13->GetXaxis();
+  xaxis->SetTitle("Matching flag");
+  yaxis->SetTitle("Entries");
+	//yaxis->SetRangeUser(0, 5300);
+  xaxis->SetTitleOffset(1.2);
+  hist_13->Draw("HIST");
+  //c13->Print("MF_dR0.2.png");
 		
 	gBenchmark->Show("L1NtupleReader");
 }

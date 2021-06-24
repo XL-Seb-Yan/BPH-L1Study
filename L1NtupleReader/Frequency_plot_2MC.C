@@ -40,21 +40,25 @@ float deltaR(float eta1, float phi1, float eta2, float phi2){
 	return dR;
 }
 
-void Frequency_plot_1MC(const TString samplename="KeeMC",
-									const int nEvents = -1){
+void Frequency_plot_2MC(const TString samplename="ZeroBias2018",
+									const int nEvents = -1,
+									const float MuEtaCut = 5,
+									const float EgEtaCut = 5){
 	
 	gBenchmark->Start("L1NtupleReader");
 	gROOT->SetBatch(1);
 	gStyle->SetOptStat(0);
 	
+	TString MuEtaCut_str = std::to_string(MuEtaCut).substr(0, std::to_string(MuEtaCut).find(".") + 2);
+	TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
+	
 	// Local variables:
 	UShort_t N_eg, N_mu, N_genpart;
 	float Et_eg, Eta_eg, Phi_eg, Iso_eg;
 	float Et_muon, Eta_muon, Phi_muon, Iso_muon;
-		
-	TString histname = "SingleMu";
-	TH2D* hist2d_1 = new TH2D("hist",histname,10,0,10,25,0,2.5);
-	TH1F* hist_11 = new TH1F("hist11","Eg pT",50,0,25);
+	
+	TString histname = "Mu_Eta" + MuEtaCut_str + "_El_Eta" + EgEtaCut_str;
+	TH2F* hist2d_1 = new TH2F("hist",histname,10,0,10,9,1,10);
 	
 	TTreeReader fReader_L1;  //!the tree reader
 	TTreeReaderValue<UShort_t> nEGs = {fReader_L1, "nEGs"};
@@ -79,11 +83,10 @@ void Frequency_plot_1MC(const TString samplename="KeeMC",
 	TTreeReaderArray<int> genPartId    = {fReader_GEN, "partId"};
 	TTreeReaderArray<int> genPartStat    = {fReader_GEN, "partStat"};
 	TTreeReaderArray<int> genPartParent    = {fReader_GEN, "partParent"};
-	
+		
 	int globcounter_0, globcounter_1;
-	for(int MuEtThr = 2; MuEtThr < 10; MuEtThr+=1){
-		for(double MuEtaThr = 1.5; MuEtaThr < 1.6 ; MuEtaThr+=0.1){	
-			int counter = 0;
+	for(int MuEtThr = 2; MuEtThr < 3; MuEtThr+=1){
+		for(int EgEtThr = 0; EgEtThr < 10; EgEtThr+=1){
 			int counter_0 = 0; //count how many events have two right electrons at GEN level
 			int counter_1 = 0; //count how many events have two right electrons and final state muon at GEN level
 			ifstream insample(samplename+TString(".txt"));
@@ -115,23 +118,13 @@ void Frequency_plot_1MC(const TString samplename="KeeMC",
 				if(nEvents != -1)
 					Evt2Process_L1 = nEvents;
 				
-				counter += Evt2Process_L1;
 				for(UInt_t ientry=0; ientry<Evt2Process_L1; ientry++){
 					fReader_L1.SetLocalEntry(ientry);
 					fReader_GEN.SetLocalEntry(ientry);
-					if(ientry % 10000 == 0) cout<<"Processing: "<<float(ientry) / Evt2Process_L1<<endl;
 					
 					N_eg = *nEGs;
 					N_mu = *nMuons;
 					N_genpart = *nGenPart;
-					
-					// Print GEN event
-					// cout<<endl;
-					// cout<<"============================================================="<<endl;
-					// for(UInt_t i=0; i<N_genpart; i++){
-						// if((abs(genPartId[i]) > 500 && abs(genPartId[i]) < 600) || abs(genPartId[i]) == 11)
-							// cout<<"#: "<<i<<" pdgID: "<<genPartId[i]<<" status: "<<genPartStat[i]<<" parent: "<<genPartParent[i]<<endl;
-					// }
 					
 					//find GEN level electrons from B+ decay
 					std::vector<TLorentzVector> gen_el;	
@@ -160,28 +153,37 @@ void Frequency_plot_1MC(const TString samplename="KeeMC",
 						continue;
 					}
 					counter_1++;
-					
+
 					// L1
-					bool isFired = false;
-					int matchL1MuIndex = -1;
+					bool isMuPass = false;
+					bool isEgPass = false;
+					
+					for(UInt_t i=0; i<N_eg; i++){
+						if(abs(egEta[i]) > EgEtaCut || egEt[i] < EgEtThr) continue;
+						float mindR = 99;
+						for(int iGENel = 0; iGENel < gen_el.size(); iGENel++){
+							float dR = deltaR(egEta[i], egPhi[i], gen_el[iGENel].Eta(), gen_el[iGENel].Phi());
+							if(dR < mindR) mindR = dR;
+						}
+						if(mindR > 0.4) continue;
+						isEgPass = true;
+						break;
+					}
+					
 					for(UInt_t i=0; i<N_mu; i++){
-						if(muonEt[i] < MuEtThr) continue;
+						if(abs(muonEta[i]) > MuEtaCut || muonEt[i] < MuEtThr) continue;
 						if(muonQual[i] < 12) continue;
-						if(abs(muonEta[i]) > MuEtaThr) continue;
 						float mindR = 99;
 						for(int iGENmu = 0; iGENmu < gen_mu.size(); iGENmu++){
 							float dR = deltaR(muonEta[i], muonPhi[i], gen_mu[iGENmu].Eta(), gen_mu[iGENmu].Phi());
 							if(dR < mindR) mindR = dR;
 						}
 						if(mindR > 0.4) continue;
-						matchL1MuIndex = i;
-						isFired = true;
+						isMuPass = true;
 						break;
 					}
-					for(UInt_t i=0; i<N_eg; i++){
-						hist_11->Fill(egEt[i]);
-					}
 					
+					/*
 					// Check if this event has Kee falling withing the acceptance
 					bool isElInAcceptance_0 = false;
 					bool isElInAcceptance_1 = false;
@@ -208,21 +210,15 @@ void Frequency_plot_1MC(const TString samplename="KeeMC",
 					}
 					if(matchL1Index_1 < 0 || mindR_1 > 0.4) continue;
 					if(egEt[matchL1Index_1] > 2 && abs(egEta[matchL1Index_1]) < 2.4) isElInAcceptance_1 = true;
+					*/
 					
-							
-					//if(isFired){
-					if(isFired && isElInAcceptance_0 && isElInAcceptance_1){
-						hist2d_1->Fill(MuEtThr+0.5, MuEtaThr+0.05);
-					}
+					if(isMuPass && isEgPass)
+					//if(isMuPass && isEgPass && isElInAcceptance_0 && isElInAcceptance_1)
+						hist2d_1->Fill(EgEtThr+0.5, MuEtThr+0.5);
 					
 				}//end of event loop
 				infile->Close();
-				df_L1 = NULL;
-				df_GEN = NULL;
-				eventTree_L1 = NULL;
-				eventTree_GEN = NULL;
 			}//end of file loop
-			cout<<counter<<endl;
 			globcounter_0 = counter_0;
 			globcounter_1 = counter_1;
 		}
@@ -238,23 +234,14 @@ void Frequency_plot_1MC(const TString samplename="KeeMC",
 	hist2d_1->SetLineWidth(2);
 	yaxis = hist2d_1->GetYaxis();
 	xaxis = hist2d_1->GetXaxis();
-	xaxis->SetTitle("Threshold on p_{T #mu} [GeV]");
+	xaxis->SetTitle("Threshold (>=) on E_{T e/#gamma} [GeV]");
 	xaxis->SetTitleOffset(1.2);
-	yaxis->SetTitle("Threshold on |#eta|_{#mu}");
+	yaxis->SetTitle("Threshold (>=) on p_{T #mu} [GeV]");
 	hist2d_1->Draw("COLZ TEXT");
-	TString outName = "EffAcc_singleMu.png";
-	c11->Print(outName);
-	
-	TCanvas *c12 = new TCanvas("","",1200,900);
-	c12->cd();
-	hist_11->SetLineWidth(2);
-	yaxis = hist_11->GetYaxis();
-	xaxis = hist_11->GetXaxis();
-	xaxis->SetTitle("p_{T}^{#EG} leading [GeV]");
-	xaxis->SetTitleOffset(1.2);
-	yaxis->SetTitle("Entries / 0.1 GeV");
-	hist_11->Draw("HIST");
-	c12->Print("EgPt.png");
+	TString outName = "Eff_mu_Eta"+MuEtaCut_str+"_el_Eta"+EgEtaCut_str+"matchingdR0.4";
+	gStyle->SetOptTitle(0);
+	c11->Print(outName+".png");
+	//c11->Print(outName+".svg");
 		
 	gBenchmark->Show("L1NtupleReader");
 }

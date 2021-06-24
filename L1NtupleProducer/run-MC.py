@@ -12,7 +12,8 @@ from Configuration.AlCa.autoCond_condDBv2 import autoCond
 process.GlobalTag.globaltag = cms.string(autoCond['run2_mc'])
 
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 20000
+process.MessageLogger.cerr.threshold = "ERROR"
 
 # Input source
 process.source = cms.Source("PoolSource",
