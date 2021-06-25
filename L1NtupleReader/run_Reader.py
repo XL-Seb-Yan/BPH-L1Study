@@ -47,7 +47,7 @@ if __name__ == "__main__":
                 
     if mode is 13:
         for EgEtaCut in [1.0]:
-            os.system(r"root -l -q -b -x Frequency_plot_3.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "\)") # rate of double_el_Etax.x_dRx.x trigger
+            os.system(r"root -l -q -b -x Frequency_plot_31.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "\)") # rate of double_el_Etax.x_dRx.x trigger
     if mode is 23:
         for EgEtaCut in [1.0]:
             os.system(r"root -l -q -b -x Frequency_plot_3MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "\)") # eff of double_el_Etax.x_dRx.x trigger
