@@ -30,8 +30,6 @@ void L1Analysis::MiniAODTrigger::SetTrigObj(const edm::Handle<std::vector<pat::T
     for (unsigned h = 0; h < obj.filterLabels().size(); ++h) std::cout << " " << obj.filterLabels()[h];
     std::cout << std::endl;
   }
-  std::cout << std::endl;
-  
   hlt_.nTrigObjs = nTrigObjets;
   
 }

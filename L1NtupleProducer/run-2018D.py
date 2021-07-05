@@ -12,12 +12,14 @@ from Configuration.AlCa.autoCond_condDBv2 import autoCond
 process.GlobalTag.globaltag = cms.string(autoCond['run2_data'])
 
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 # Input source
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(500))
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(options.inputFiles)
 )
+
 
 # import FWCore.PythonUtilities.LumiList as LumiList
 # import FWCore.ParameterSet.Types as CfgTypes
@@ -32,10 +34,13 @@ process.HLTTree = cms.EDAnalyzer("MiniAODTriggerProducer",
     prescales = cms.InputTag("patTrigger","","RECO"),
     objects = cms.InputTag("slimmedPatTrigger"),
 )
+process.HLTree = cms.EDAnalyzer("MiniAODHLProducer",
+    electrons = cms.InputTag("slimmedElectrons"),
+)
 
 # output file
 process.TFileService = cms.Service("TFileService",
     fileName = cms.string('L1Ntuple.root')
 )
 
-process.p = cms.Path(process.l1UpgradeTree * process.HLTTree)
+process.p = cms.Path(process.l1UpgradeTree * process.HLTree)

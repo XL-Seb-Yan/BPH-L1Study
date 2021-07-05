@@ -1,3 +1,4 @@
 <lcgdict>
 <class name="L1Analysis::MiniAODTriggerDataFormat"/>
+<class name="L1Analysis::MiniAODHLDataFormat"/>
 </lcgdict>
