@@ -46,25 +46,33 @@ if __name__ == "__main__":
                 
                 
     if mode is 13:
-        for EgEtaCut in [1.0]:
-            os.system(r"root -l -q -b -x Frequency_plot_31.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "\)") # rate of double_el_Etax.x_dRx.x trigger
-    if mode is 23:
-        for EgEtaCut in [1.0]:
-            os.system(r"root -l -q -b -x Frequency_plot_3MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "\)") # eff of double_el_Etax.x_dRx.x trigger
+         for EgEtaCut in [0.8,1.0,1.2,1.4]:
+            for dRCut in [0.7,0.6]:
+                os.system(r"root -l -q -b -x Frequency_plot_3.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # rate of double_el_Etax.x_dRx.x trigger
     if mode is 231:
+        for EgEtaCut in [0.8,1.0,1.2,1.4]:
+            for dRCut in [0.7,0.6]:
+                os.system(r"root -l -q -b -x Frequency_plot_3MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # eff of double_el_Etax.x_dRx.x trigger
+    if mode is 232:
         for EgEtaCut in [1.0]:
-            os.system(r"root -l -q -b -x Frequency_plot_31MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "\)") # eff of double_el_Etax.x_dRx.x trigger
+            for dRCut in [0.9, 0.8]:
+                os.system(r"root -l -q -b -x Frequency_plot_3MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # eff of double_el_Etax.x_dRx.x trigger
+    if mode is 233:
+        for EgEtaCut in [0.8]:
+            for dRCut in [1.0, 0.9, 0.8]:
+                os.system(r"root -l -q -b -x Frequency_plot_3MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # eff of double_el_Etax.x_dRx.x trigger
+
 
             
     if mode is 14:
         for MuEtCut in [2.0]:
             for MuEtaCut in [2.5]:
-                for EgEtaCut in [1.0]:
+                for EgEtaCut in [2.5]:
                     os.system(r"root -l -q -b -x Frequency_plot_4.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") # rate of mu+double_el_Etax.x_dRx.x trigger
     if mode is 24:
         for MuEtCut in [2.0]:
             for MuEtaCut in [2.5]:
-                for EgEtaCut in [1.0]:
+                for EgEtaCut in [2.5]:
                     os.system(r"root -l -q -b -x Frequency_plot_4MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") # rate of mu+double_el_Etax.x_dRx.x trigger
     
     

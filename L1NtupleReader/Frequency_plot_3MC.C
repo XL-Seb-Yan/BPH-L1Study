@@ -42,13 +42,15 @@ float deltaR(float eta1, float phi1, float eta2, float phi2){
 
 void Frequency_plot_3MC(const TString samplename="KeeMC",
 											const int nEvents = -1,
-											const float EgEtaCut = 2.5){
+											const float EgEtaCut = 1.0,
+											const float dRCut = 1.0){
 	
 	gBenchmark->Start("L1NtupleReader");
 	gROOT->SetBatch(1);
 	gStyle->SetOptStat(0);
 	
 	TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
+	TString dRCut_str = std::to_string(dRCut).substr(0, std::to_string(dRCut).find(".") + 2);
 	
 	// Local variables:
 	UShort_t N_eg, N_mu, N_genpart;
@@ -57,7 +59,7 @@ void Frequency_plot_3MC(const TString samplename="KeeMC",
 	
 	// Histograms
 	TString histname = "Eff (Double_el_eta"+EgEtaCut_str+"_dR1.0)";
-  TH2F* hist2d_1 = new TH2F("EgEtl_EgEts",histname,9,1,10,9,1,10);
+  TH2F* hist2d_1 = new TH2F("EgEtl_EgEts",histname,10,1,11,10,1,11);
 	TH1F* hist_11 = new TH1F("dR1","#Delta R of matching",70,-2,5);
 	TH1F* hist_12 = new TH1F("dR2","#Delta R of matching",70,-2,5);
 	TH1F* hist_13 = new TH1F("mf","Matching flag of di-EG fired trigger",40,0,20);
@@ -87,7 +89,7 @@ void Frequency_plot_3MC(const TString samplename="KeeMC",
 	TTreeReaderArray<int> genPartParent    = {fReader_GEN, "partParent"};
 	
 	int globcounter_0;
-	for(int EgEtThr = 7; EgEtThr < 8; EgEtThr++){
+	for(int EgEtThr = 2; EgEtThr < 11; EgEtThr++){
     int counter_0 = 0; //count how many events have two right electrons at GEN level
 		ifstream insample(samplename+TString(".txt"));
 		std::string line;
@@ -203,8 +205,6 @@ void Frequency_plot_3MC(const TString samplename="KeeMC",
 				}
 				*/
 				
-
-				
 				// Matching method 2
 				for(UInt_t i=0; i<N_eg; i++){
 					if(abs(egEta[i]) > EgEtaCut || egEt[i] < EgEtThr) continue;
@@ -217,15 +217,15 @@ void Frequency_plot_3MC(const TString samplename="KeeMC",
 				for(int i=0; i<EgSel_index.size()-1; i++){
 					for(int j=i+1; j<EgSel_index.size(); j++){
 						float dR = deltaR(egEta[EgSel_index[i]],egPhi[EgSel_index[i]],egEta[EgSel_index[j]],egPhi[EgSel_index[j]]);
-						if(dR > 1.0) continue;
+						if(dR > dRCut) continue;
 						bool matching_0_0 = false;
 						bool matching_0_1 = false;
 						bool matching_1_0 = false;
 						bool matching_1_1 = false;
-						if(deltaR(egEta[EgSel_index[i]], egPhi[EgSel_index[i]], gen_el[0].Eta(), gen_el[0].Phi()) < 0.4) matching_0_0 = true;
-						if(deltaR(egEta[EgSel_index[i]], egPhi[EgSel_index[i]], gen_el[1].Eta(), gen_el[1].Phi()) < 0.4) matching_0_1 = true;
-						if(deltaR(egEta[EgSel_index[j]], egPhi[EgSel_index[j]], gen_el[0].Eta(), gen_el[0].Phi()) < 0.4) matching_1_0 = true;
-						if(deltaR(egEta[EgSel_index[j]], egPhi[EgSel_index[j]], gen_el[1].Eta(), gen_el[1].Phi()) < 0.4) matching_1_1 = true;
+						if(deltaR(egEta[EgSel_index[i]], egPhi[EgSel_index[i]], gen_el[0].Eta(), gen_el[0].Phi()) < 0.2) matching_0_0 = true;
+						if(deltaR(egEta[EgSel_index[i]], egPhi[EgSel_index[i]], gen_el[1].Eta(), gen_el[1].Phi()) < 0.2) matching_0_1 = true;
+						if(deltaR(egEta[EgSel_index[j]], egPhi[EgSel_index[j]], gen_el[0].Eta(), gen_el[0].Phi()) < 0.2) matching_1_0 = true;
+						if(deltaR(egEta[EgSel_index[j]], egPhi[EgSel_index[j]], gen_el[1].Eta(), gen_el[1].Phi()) < 0.2) matching_1_1 = true;
 						matching_flag = matching_0_0*8 + matching_0_1*4  + matching_1_0*2 + matching_1_1*1;
 						if(matching_flag == 6 || matching_flag == 9)
 							isFired = true;
@@ -233,7 +233,7 @@ void Frequency_plot_3MC(const TString samplename="KeeMC",
 					}
 				}
 				
-				/*
+				
 				// Check if this event has Kee falling withing the acceptance
 				bool isElInAcceptance_0 = false;
 				bool isElInAcceptance_1 = false;
@@ -248,7 +248,7 @@ void Frequency_plot_3MC(const TString samplename="KeeMC",
 						matchL1Index_0 = i;
 					}
 				}
-				if(matchL1Index_0 < 0 || mindR_0 > 0.4) continue;
+				if(matchL1Index_0 < 0 || mindR_0 > 0.2) continue;
 				if(egEt[matchL1Index_0] > 2 && abs(egEta[matchL1Index_0]) < 2.4) isElInAcceptance_0 = true;
 				// matching the second GEN electron
 				for(UInt_t i=0; i<N_eg; i++){
@@ -258,13 +258,12 @@ void Frequency_plot_3MC(const TString samplename="KeeMC",
 						matchL1Index_1 = i;
 					}
 				}
-				if(matchL1Index_1 < 0 || mindR_1 > 0.4) continue;
+				if(matchL1Index_1 < 0 || mindR_1 > 0.2) continue;
 				if(egEt[matchL1Index_1] > 2 && abs(egEta[matchL1Index_1]) < 2.4) isElInAcceptance_1 = true;
-				*/
-					
 				
-				if(isFired)
-				//if(isFired && isElInAcceptance_0 && isElInAcceptance_1)
+				
+				//if(isFired)
+				if(isFired && isElInAcceptance_0 && isElInAcceptance_1)
 					hist2d_1->Fill(EgEtThr+0.5,EgEtThr+0.5);
 				
 
@@ -289,7 +288,7 @@ void Frequency_plot_3MC(const TString samplename="KeeMC",
   xaxis->SetTitle("Threshold on E_{T e/#gamma L} [GeV]");
   xaxis->SetTitleOffset(1.2);
   hist2d_1->Draw("COLZ TEXT");
-  TString outName = "Eff_double_el_Eta"+EgEtaCut_str+"_dR1p0_matching2_0p4";
+  TString outName = "Eff_double_el_Eta"+EgEtaCut_str+"_dR"+dRCut_str+"_matching2_0p2";
   c11->Print(outName+".png");
   //c11->Print(outName+".svg");
 	

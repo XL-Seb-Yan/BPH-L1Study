@@ -104,6 +104,9 @@ void Frequency_plot_1(const TString samplename="ZeroBias2018",
 						isPass = true;
 						break;
 					}
+					
+					if(N_mu > 0)
+						//cout<<"Evt: "<<ientry<<" # EGs: "<<N_mu<<" leading pT: "<<muonEt[EgSel_index[0]]<<" eta: "<<muonEta[EgSel_index[0]]<<" phi: "<<muonPhi[EgSel_index[0]]<<" current trig: "<<MuEtThr<<" is fired: "<<isFired<<endl;
 							
 					if(isPass)
 						hist2d_1->Fill(MuEtThr+0.5, MuEtaThr+0.05);

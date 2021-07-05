@@ -36,6 +36,12 @@ process.genTree = cms.EDAnalyzer("L1GenTreeProducerMINIAOD",
     genParticleToken = cms.untracked.InputTag("genParticles"),
     genInfoToken = cms.InputTag("generator")
 )
+process.HLTTree = cms.EDAnalyzer("MiniAODTriggerProducer",
+    bits = cms.InputTag("TriggerResults","","HLT"),
+    objects = cms.InputTag("selectedPatTrigger"),
+    prescales = cms.InputTag("patTrigger")
+)
+
 
 # output file
 process.TFileService = cms.Service("TFileService",
@@ -43,5 +49,5 @@ process.TFileService = cms.Service("TFileService",
 )
 
 process.p = cms.Path(
-  process.l1UpgradeTree * process.genTree
+  process.l1UpgradeTree * process.genTree * process.HLTTree
 )

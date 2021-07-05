@@ -42,7 +42,15 @@ float deltaR(float eta1, float phi1, float eta2, float phi2){
 
 void Frequency_plot_3(const TString samplename="ZeroBias2018",
                       const int nEvents = -1,
-                      const float EgEtaCut = 2.5){
+											const float EgEtaCut = 1.0,
+											const float dRCut = 1.0){
+	
+	gBenchmark->Start("L1NtupleReader");
+	gROOT->SetBatch(1);
+	gStyle->SetOptStat(0);
+	
+	TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
+	TString dRCut_str = std::to_string(dRCut).substr(0, std::to_string(dRCut).find(".") + 2);
   
   gBenchmark->Start("L1NtupleReader");
   gROOT->SetBatch(1);
@@ -55,8 +63,6 @@ void Frequency_plot_3(const TString samplename="ZeroBias2018",
   gStyle->SetBarWidth(2);
   gStyle->SetHistLineWidth(2);
   
-  TString EgEtaCut_str = std::to_string(EgEtaCut).substr(0, std::to_string(EgEtaCut).find(".") + 2);
-  
   // Local variables:
   UShort_t N_eg, N_mu;
   float Et_eg, Eta_eg, Phi_eg, Iso_eg;
@@ -64,7 +70,7 @@ void Frequency_plot_3(const TString samplename="ZeroBias2018",
   
   // Histograms
   TString histname = "Rate (Double_el_eta"+EgEtaCut_str+"_dR1.0)";
-  TH2F* hist2d_1 = new TH2F("EgEtl_EgEts",histname,9,1,10,9,1,10);
+  TH2F* hist2d_1 = new TH2F("EgEtl_EgEts",histname,10,1,11,9,10,11);
   
   TTreeReader fReader;  //!the tree reader
   TTreeReaderValue<UShort_t> nEGs = {fReader, "nEGs"};
@@ -80,7 +86,7 @@ void Frequency_plot_3(const TString samplename="ZeroBias2018",
   TTreeReaderArray<unsigned short> muonIso   = {fReader, "muonIso"};
   TTreeReaderArray<unsigned short> muonQual   = {fReader, "muonQual"};
   
-  for(int EgEtThr = 0; EgEtThr < 10; EgEtThr++){
+  for(int EgEtThr = 0; EgEtThr < 11; EgEtThr++){
     int counter_0 = 0;
     ifstream insample(samplename+TString(".txt"));
     std::string line;
@@ -125,7 +131,7 @@ void Frequency_plot_3(const TString samplename="ZeroBias2018",
         for(int i=0; i<EgSel_index.size()-1; i++){
           for(int j=i+1; j<EgSel_index.size(); j++){
             float dR = deltaR(egEta[EgSel_index[i]],egPhi[EgSel_index[i]],egEta[EgSel_index[j]],egPhi[EgSel_index[j]]);
-            if(dR > 1.0) continue;
+            if(dR > dRCut) continue;
             // TLorentzVector eg1, eg2;
             // eg1.SetPtEtaPhiM(egEt[EgSel_index[i]],egEta[EgSel_index[i]],egPhi[EgSel_index[i]],0.0005110);
             // eg2.SetPtEtaPhiM(egEt[EgSel_index[j]],egEta[EgSel_index[j]],egPhi[EgSel_index[j]],0.0005110);
@@ -158,7 +164,7 @@ void Frequency_plot_3(const TString samplename="ZeroBias2018",
   xaxis->SetTitle("Threshold on E_{T e/#gamma L} [GeV]");
   xaxis->SetTitleOffset(1.2);
   hist2d_1->Draw("COLZ TEXT");
-  TString outName = "Rate_double_el_Eta"+EgEtaCut_str+"_dR1p0";
+  TString outName = "Rate__double_el_Eta"+EgEtaCut_str+"_dR"+dRCut_str;
   c11->Print(outName+".png");
   c11->Print(outName+".svg");
     

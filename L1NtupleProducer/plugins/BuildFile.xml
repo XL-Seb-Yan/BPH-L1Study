@@ -17,6 +17,8 @@
 <use name="DataFormats/L1GlobalCaloTrigger"/>
 <use name="DataFormats/L1CSCTrackFinder"/>
 <use name="DataFormats/L1DTTrackFinder"/>
+<use name="DataFormats/PatCandidates"/>
+<use name="DataFormats/Candidate"/>
 <use name="DataFormats/HcalDigi"/>
 <use name="DataFormats/EcalDigi"/>
 <use name="DataFormats/EcalRecHit"/>
@@ -46,6 +48,7 @@
 <use name="PhysicsTools/Utilities"/>
 <use name="HLTrigger/HLTcore"/>
 <use name="L1Trigger/L1TNtuples"/>
+<use name="BPHL1Study/L1NtupleProducer"/>
 <library   file="*.cc" name="BPHL1StudyL1NtupleProducerPlugins">
   <flags   EDM_PLUGIN="1"/>
 </library>
