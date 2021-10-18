@@ -31,49 +31,33 @@ if __name__ == "__main__":
     mode = args.Mode
     
     if mode is 11:
-        os.system(r"root -l -q -b -x Frequency_plot_1.C+\(\"" + data_list + r"\"," + str(Nevt) + "\)") # rate of singleMu trigger 
-    if mode is 21:
-        os.system(r"root -l -q -b -x Frequency_plot_1MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "\)") # eff of singleMu trigger 
-        
+        os.system(r"root -l -q -b -x Frequency_plot_mu.C+\(\"" + data_list + r"\"," + str(Nevt) + "\)") # rate of singleMu trigger 
     if mode is 12:
-        for MuEtaCut in [1.0]:
-            for EgEtaCut in [2.5]:
-                os.system(r"root -l -q -b -x Frequency_plot_2.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") # rate of e+mu trigger
+        os.system(r"root -l -q -b -x Frequency_plot_mu_MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "\)") # eff of singleMu trigger 
+                
+                
+    if mode is 21:
+         for EgEtaCut in [1.2]:
+            for dRCut in [0.7]:
+                os.system(r"root -l -q -b -x Frequency_plot_elel.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # rate of double_el_Etax.x_dRx.x trigger
     if mode is 22:
-        for MuEtaCut in [1.0]:
-            for EgEtaCut in [2.5]:
-                os.system(r"root -l -q -b -x Frequency_plot_2MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") # eff of e+mu trigger
-                
-                
-    if mode is 13:
-         for EgEtaCut in [0.8,1.0,1.2,1.4]:
-            for dRCut in [0.7,0.6]:
-                os.system(r"root -l -q -b -x Frequency_plot_3.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # rate of double_el_Etax.x_dRx.x trigger
-    if mode is 231:
-        for EgEtaCut in [0.8,1.0,1.2,1.4]:
-            for dRCut in [0.7,0.6]:
-                os.system(r"root -l -q -b -x Frequency_plot_3MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # eff of double_el_Etax.x_dRx.x trigger
-    if mode is 232:
-        for EgEtaCut in [1.0]:
-            for dRCut in [0.9, 0.8]:
-                os.system(r"root -l -q -b -x Frequency_plot_3MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # eff of double_el_Etax.x_dRx.x trigger
-    if mode is 233:
-        for EgEtaCut in [0.8]:
-            for dRCut in [1.0, 0.9, 0.8]:
-                os.system(r"root -l -q -b -x Frequency_plot_3MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # eff of double_el_Etax.x_dRx.x trigger
+        for EgEtaCut in [1.2]:
+            for dRCut in [0.7]:
+                os.system(r"root -l -q -b -x Frequency_plot_elel_MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # eff of double_el_Etax.x_dRx.x trigger
 
-
-            
-    if mode is 14:
-        for MuEtCut in [2.0]:
-            for MuEtaCut in [2.5]:
-                for EgEtaCut in [2.5]:
-                    os.system(r"root -l -q -b -x Frequency_plot_4.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") # rate of mu+double_el_Etax.x_dRx.x trigger
-    if mode is 24:
-        for MuEtCut in [2.0]:
-            for MuEtaCut in [2.5]:
-                for EgEtaCut in [2.5]:
-                    os.system(r"root -l -q -b -x Frequency_plot_4MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(MuEtCut) + "," + str(MuEtaCut) + "," + str(EgEtaCut) + "\)") # rate of mu+double_el_Etax.x_dRx.x trigger
+    if mode is 31:
+        for EgEtCut in [7]:
+            for EgEtaCut in [1.2]:
+                for dRCut in [0.7]:
+                    os.system(r"root -l -q -b -x Frequency_plot_elelj.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtCut) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # rate of elel+jet trigger
+    if mode is 32:
+        for EgEtCut in [7]:
+            for EgEtaCut in [1.2]:
+                for dRCut in [0.7]:
+                    os.system(r"root -l -q -b -x Frequency_plot_elelj_MC.C+\(\"" + data_list + r"\"," + str(Nevt) + "," + str(EgEtCut) + "," + str(EgEtaCut) + "," + str(dRCut) +"\)") # rate of elel+jet trigger
+                    
+    if mode is 99:
+        os.system(r"root -l -q -b -x MCuts.C+\(\"" + data_list + r"\"," + str(Nevt) + "\)") # MC study
     
     
     

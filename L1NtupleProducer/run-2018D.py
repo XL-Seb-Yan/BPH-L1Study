@@ -12,10 +12,10 @@ from Configuration.AlCa.autoCond_condDBv2 import autoCond
 process.GlobalTag.globaltag = cms.string(autoCond['run2_data'])
 
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 
 # Input source
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(500))
+# process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(options.inputFiles)
 )
@@ -28,7 +28,17 @@ process.source = cms.Source("PoolSource",
 # process.source.lumisToProcess.extend(myLumis) 
 
 # producer under test
-process.load("L1Trigger.L1TNtuples.l1UpgradeTree_cfi")
+process.l1UpgradeTree = cms.EDAnalyzer(
+    "L1UpgradeTreeProducer",
+    egToken = cms.untracked.InputTag("caloStage2Digis","EGamma"),
+    tauTokens = cms.untracked.VInputTag(cms.InputTag("caloStage2Digis","Tau")),
+    jetToken = cms.untracked.InputTag("caloStage2Digis","Jet"),
+    muonToken = cms.untracked.InputTag("gmtStage2Digis","Muon"),
+    muonLegacyToken = cms.untracked.InputTag("muonLegacyInStage2FormatDigis","legacyMuon"),
+    sumToken = cms.untracked.InputTag("caloStage2Digis","EtSum"),
+    maxL1Upgrade = cms.uint32(60)
+)
+
 process.HLTTree = cms.EDAnalyzer("MiniAODTriggerProducer",
     bits = cms.InputTag("TriggerResults","","HLT"),
     prescales = cms.InputTag("patTrigger","","RECO"),
@@ -43,4 +53,4 @@ process.TFileService = cms.Service("TFileService",
     fileName = cms.string('L1Ntuple.root')
 )
 
-process.p = cms.Path(process.l1UpgradeTree * process.HLTree)
+process.p = cms.Path(process.l1UpgradeTree * process.HLTTree * process.HLTree)

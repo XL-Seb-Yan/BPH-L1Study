@@ -27,6 +27,10 @@ namespace L1Analysis
       isTightEl.clear();
     }
    
+    unsigned int evtEvent;
+    unsigned int evtRun;
+    unsigned int evtLumiBlock;
+    
     unsigned short int nEl;
     std::vector<float> ptEl;
     std::vector<float> etaEl;

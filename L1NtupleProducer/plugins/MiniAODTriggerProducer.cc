@@ -66,10 +66,13 @@ MiniAODTriggerProducer::MiniAODTriggerProducer(const edm::ParameterSet& iConfig)
 
 void MiniAODTriggerProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+  
+  hltData->Reset();
+  
   edm::Handle<edm::TriggerResults> triggerBits;
   iEvent.getByToken(triggerBits_, triggerBits);
 
-   edm::Handle<std::vector<pat::TriggerObjectStandAlone> > triggerObjects;
+  edm::Handle<std::vector<pat::TriggerObjectStandAlone> > triggerObjects;
   iEvent.getByToken(triggerObjects_, triggerObjects);
 
    edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;

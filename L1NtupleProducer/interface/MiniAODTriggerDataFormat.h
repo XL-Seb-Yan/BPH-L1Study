@@ -17,20 +17,17 @@ namespace L1Analysis
     void Reset()
     {
       nTrigObjs = 0;
-      pt.clear();
-      eta.clear();
-      phi.clear();
-      energy.clear();
-      collection.clear();
+      ptTriObj.clear();
+      etaTriObj.clear();
+      phiTriObj.clear();
+      energyTriObj.clear();
     }
    
     unsigned short int nTrigObjs;
-    std::vector<float> pt;
-    std::vector<float> eta;
-    std::vector<float> phi;
-    std::vector<float> energy;
-    std::vector<std::string> collection;
-
+    std::vector<float> ptTriObj;
+    std::vector<float> etaTriObj;
+    std::vector<float> phiTriObj;
+    std::vector<float> energyTriObj;
   }; 
 }
 #endif

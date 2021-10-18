@@ -24,7 +24,8 @@ namespace L1Analysis
     MiniAODHightLevel();
     ~MiniAODHightLevel();
     void Reset() {highLevel_.Reset();}
-    void SetEl   (const edm::Handle<std::vector<pat::Electron> > electrons);
+    void SetEvt(const edm::Event& iEvent);
+    void SetEl(const edm::Handle<std::vector<pat::Electron> > electrons);
     MiniAODHLDataFormat * getData() {return &highLevel_;}
 
   private :

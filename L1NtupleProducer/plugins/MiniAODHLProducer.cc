@@ -66,10 +66,12 @@ MiniAODHLProducer::MiniAODHLProducer(const edm::ParameterSet& iConfig):
 
 void MiniAODHLProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+  highLevelData->Reset();
 
   edm::Handle<std::vector<pat::Electron> > electrons;
   iEvent.getByToken(electronToken_, electrons);
-
+  
+  highLevel->SetEvt(iEvent);
 
   if (electrons.isValid()){ 
     highLevel->SetEl(electrons);

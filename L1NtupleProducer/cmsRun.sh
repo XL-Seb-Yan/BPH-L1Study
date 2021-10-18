@@ -13,10 +13,9 @@ voms-proxy-info -all -file ${8}
 cp ${1}${2}.tgz .
 tar -xf ${2}.tgz
 rm ${2}.tgz
-mv run-2018D.py ${3}/src/BPHL1Study/L1NtupleProducer
+mv ${5} ${3}/src/BPHL1Study/L1NtupleProducer
 mv JSON_dataNtuples.txt ${3}/src/BPHL1Study/L1NtupleProducer
 mv filelist.tgz ${3}/src/BPHL1Study/L1NtupleProducer
-mv ${6} ${3}/src/BPHL1Study/L1NtupleProducer
 
 export $SCRAM_ARCH=slc7_amd64_gcc700
 cd ${3}/src/

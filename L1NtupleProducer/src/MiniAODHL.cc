@@ -9,6 +9,14 @@ L1Analysis::MiniAODHightLevel::~MiniAODHightLevel()
 
 }
 
+void L1Analysis::MiniAODHightLevel::SetEvt(const edm::Event& iEvent)
+{
+    highLevel_.evtEvent = iEvent.id().event();
+    highLevel_.evtRun = iEvent.id().run();
+    highLevel_.evtLumiBlock = iEvent.id().luminosityBlock();
+    
+}
+
 void L1Analysis::MiniAODHightLevel::SetEl(const edm::Handle<std::vector<pat::Electron> > electrons)
 {
   int nEls = 0;
